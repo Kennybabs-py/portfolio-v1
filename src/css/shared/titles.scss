@@ -44,4 +44,8 @@
 %title-200 {
   font-family: $font-george-x;
   font-size: 20rem;
+
+  @include media("<phone") {
+    font-size: 15rem;
+  }
 }

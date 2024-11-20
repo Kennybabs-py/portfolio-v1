@@ -33,7 +33,7 @@ table {
   border-spacing: 0;
 }
 
-.content, body, html {
+.hero__section .hero__title figure img, .content, html {
   width: 100%;
   height: 100%;
   position: absolute;
@@ -45,16 +45,24 @@ table {
   z-index: 99999 !important;
 }
 
-body {
-  font-size: 1.6rem;
-  font-weight: 300;
-  line-height: 1.5;
+html.lenis, html.lenis body {
+  height: auto;
 }
 
-@media (width <= 764px) {
-  body {
-    font-size: 2.8rem;
-  }
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
 }
 
 .navigation__list__link {
@@ -68,9 +76,15 @@ body {
   }
 }
 
-.hero__section h1 {
+.hero__section .hero__title h1 {
   font-family: George X;
   font-size: 20rem;
+}
+
+@media (width <= 764px) {
+  .hero__section .hero__title h1 {
+    font-size: 15rem;
+  }
 }
 
 .navigation__list__link {
@@ -149,6 +163,8 @@ body {
   box-sizing: border-box;
   -webkit-user-select: none;
   user-select: none;
+  margin: 0;
+  padding: 0;
 }
 
 html {
@@ -156,7 +172,6 @@ html {
   background-color: #28282b;
   font-size: .651042vw;
   line-height: 1;
-  position: fixed;
   overflow: hidden;
 }
 
@@ -168,7 +183,6 @@ html {
 
 body {
   font-family: Space Grotesk;
-  position: fixed;
 }
 
 a {
@@ -193,12 +207,7 @@ button {
 
 img {
   vertical-align: middle;
-  opacity: 0;
   transition: opacity .4s;
-}
-
-img.loaded {
-  opacity: 1;
 }
 
 [data-animation="title"] span, [data-animation="label"] span, [data-animation="paragraph"] span {
@@ -280,10 +289,30 @@ img.loaded {
   display: flex;
 }
 
-.hero__section h1 {
+.hero__section .hero__title {
+  flex-flow: wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 1rem;
+  display: flex;
+}
+
+.hero__section .hero__title h1 {
   text-transform: uppercase;
   font-weight: 300;
   line-height: 1;
+}
+
+.hero__section .hero__title figure {
+  aspect-ratio: 1 / .5;
+  border-radius: 50px;
+  width: 40rem;
+  position: relative;
+}
+
+.hero__section .hero__title figure img {
+  object-fit: cover;
+  border-radius: inherit;
 }
 
 .hero__section h3 {

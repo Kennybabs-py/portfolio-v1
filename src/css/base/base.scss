@@ -1,15 +1,17 @@
 *,
 *::after,
 *::before {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
   -webkit-user-select: none;
   user-select: none;
 }
+
 html {
   @extend %cover;
   font-size: calc((100vw / 1536) * 10);
   line-height: 1;
-  position: fixed;
   overflow: hidden;
   background-color: $color-matte-black;
   color: $color-alto;
@@ -21,9 +23,6 @@ html {
 
 body {
   font-family: $font-space-grotesk;
-  @extend %description-16;
-  @extend %cover;
-  position: fixed;
 }
 
 a {
@@ -48,12 +47,7 @@ button {
 
 img {
   vertical-align: middle;
-  opacity: 0;
   transition: opacity 0.4s ease;
-
-  &.loaded {
-    opacity: 1;
-  }
 }
 
 .content {

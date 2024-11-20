@@ -22,7 +22,9 @@
     "sass": "^1.81.0"
   },
   "dependencies": {
+    "gsap": "^3.12.5",
     "include-media": "^2.0.0",
+    "lenis": "^1.1.16",
     "ogl": "^1.0.9",
     "sass-migrator": "^2.2.1"
   }
