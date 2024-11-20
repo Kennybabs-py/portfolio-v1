@@ -1,0 +1,10 @@
+@use "sass:list";
+
+@function z($name) {
+  @if list.index($z-indexes, $name) {
+    @return (list.length($z-indexes) - list.index($z-indexes, $name)) + 1;
+  } @else {
+    @warn 'There is no "#{$name}" in this list; Choose out of "#{z-indexes}"';
+    @return null;
+  }
+}

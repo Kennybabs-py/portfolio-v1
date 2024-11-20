@@ -1,0 +1,29 @@
+{
+  "name": "vanilla-template",
+  "version": "1.0.0",
+  "description": "A template for html,css and js app",
+  "source": "src/index.html",
+  "scripts": {
+    "start": "parcel",
+    "build": "parcel build --dist-dir public"
+  },
+  "keywords": [
+    "Template",
+    "Html",
+    "Css",
+    "Javascript"
+  ],
+  "author": "Kehinde Babalola",
+  "license": "ISC",
+  "devDependencies": {
+    "@parcel/transformer-glsl": "^2.13.0",
+    "@parcel/transformer-sass": "^2.13.0",
+    "parcel": "^2.13.0",
+    "sass": "^1.81.0"
+  },
+  "dependencies": {
+    "include-media": "^2.0.0",
+    "ogl": "^1.0.9",
+    "sass-migrator": "^2.2.1"
+  }
+}
