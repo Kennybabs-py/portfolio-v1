@@ -6,10 +6,9 @@
   user-select: none;
 }
 html {
-  font-size: calc((100vw / 1440) * 10);
-  line-height: 1;
   @extend %cover;
-
+  font-size: calc((100vw / 1536) * 10);
+  line-height: 1;
   position: fixed;
   overflow: hidden;
   background-color: $color-matte-black;
@@ -24,7 +23,6 @@ body {
   font-family: $font-space-grotesk;
   @extend %description-16;
   @extend %cover;
-
   position: fixed;
 }
 

@@ -2,11 +2,15 @@
   color: $color-quarter-spanish-white;
   position: fixed;
   pointer-events: none;
-  display: flex;
-  align-items: center;
+  @include flex;
   justify-content: space-between;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.6rem;
   z-index: z("navigation");
+  width: 100%;
+
+  span {
+    text-transform: uppercase;
+  }
 }
 
 .navigation__link {
@@ -38,8 +42,7 @@ svg {
   stroke: currentColor;
   fill: currentColor;
 }
-.navigation__list {
-}
+
 .navigation__list__item {
   position: absolute;
   top: 4rem;

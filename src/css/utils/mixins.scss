@@ -41,3 +41,10 @@
     width: 100%;
   }
 }
+
+@mixin flex($align: "center", $justify: "center", $flow: "row") {
+  display: flex;
+  align-items: $align;
+  justify-content: $justify;
+  flex-flow: $flow;
+}

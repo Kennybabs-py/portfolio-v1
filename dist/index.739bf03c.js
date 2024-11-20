@@ -585,6 +585,64 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 }
 
 },{}],"ebWYT":[function(require,module,exports,__globalThis) {
+var _clock = require("./utils/clock");
+setInterval(()=>{
+    (0, _clock.clock)();
+}, 1000);
+
+},{"./utils/clock":"gTpoM"}],"gTpoM":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "clock", ()=>clock);
+function clock() {
+    //Save the times in variables
+    let today = new Date();
+    let hours = today.getHours();
+    let minutes = today.getMinutes();
+    let seconds = today.getSeconds();
+    //Set the AM or PM time
+    if (hours >= 12) meridiem = " PM";
+    else meridiem = " AM";
+    //convert hours to 12 hour format and put 0 in front
+    if (hours > 12) hours = hours - 12;
+    else if (hours === 0) hours = 12;
+    //Put 0 in front of single digit minutes and seconds
+    if (minutes < 10) minutes = "0" + minutes;
+    else minutes;
+    if (seconds < 10) seconds = "0" + seconds;
+    else seconds;
+    document.getElementById("clock").innerHTML = hours + ":" + minutes + ":" + seconds + meridiem;
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports,__globalThis) {
+exports.interopDefault = function(a) {
+    return a && a.__esModule ? a : {
+        default: a
+    };
+};
+exports.defineInteropFlag = function(a) {
+    Object.defineProperty(a, '__esModule', {
+        value: true
+    });
+};
+exports.exportAll = function(source, dest) {
+    Object.keys(source).forEach(function(key) {
+        if (key === 'default' || key === '__esModule' || Object.prototype.hasOwnProperty.call(dest, key)) return;
+        Object.defineProperty(dest, key, {
+            enumerable: true,
+            get: function() {
+                return source[key];
+            }
+        });
+    });
+    return dest;
+};
+exports.export = function(dest, destName, get) {
+    Object.defineProperty(dest, destName, {
+        enumerable: true,
+        get: get
+    });
+};
 
 },{}]},["dP7vO","ebWYT"], "ebWYT", "parcelRequire94c2")
 
