@@ -10,7 +10,7 @@ html {
   @extend %cover;
   font-size: calc((100vw / 1920) * 10);
   line-height: 1;
-  overflow: hidden;
+  overflow-x: hidden;
   background-color: $color-matte-black;
   color: $color-alto;
 
@@ -74,12 +74,6 @@ a {
   text-decoration: none;
   outline: none;
   color: inherit;
-}
-
-canvas {
-  position: relative;
-  pointer-events: none;
-  z-index: z("canvas");
 }
 
 button {
