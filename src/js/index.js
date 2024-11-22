@@ -95,7 +95,7 @@ const createFlipOnScrollAnimation = () => {
         ...flipConfig,
         ease: index === 0 ? "none" : flipConfig.ease, // Use 'none' easing for the first step
       };
-      tl.add(Flip.fit(heroImg, state, customFlipConfig), index ? "+=3" : 0);
+      tl.add(Flip.fit(heroImg, state, customFlipConfig), index ? "+=1" : 0);
     });
   });
 };

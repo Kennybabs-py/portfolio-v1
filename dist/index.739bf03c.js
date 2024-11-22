@@ -674,7 +674,7 @@ const createFlipOnScrollAnimation = ()=>{
                 ...flipConfig,
                 ease: index === 0 ? "none" : flipConfig.ease
             };
-            tl.add((0, _flipDefault.default).fit(heroImg, state, customFlipConfig), index ? "+=3" : 0);
+            tl.add((0, _flipDefault.default).fit(heroImg, state, customFlipConfig), index ? "+=1" : 0);
         });
     });
 };
