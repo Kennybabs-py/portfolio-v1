@@ -1,7 +1,7 @@
 {
-  "name": "vanilla-template",
+  "name": "kehinde-babalola-portfolio",
   "version": "1.0.0",
-  "description": "A template for html,css and js app",
+  "description": "Portfolio V1",
   "source": "src/index.html",
   "scripts": {
     "start": "parcel",

@@ -1,3 +1,1 @@
-# PARCEL TEMPLATE FOR HTML, SCSS AND JAVASCRIPT
-
-## (Subject to Changes)
+# Portfolio V1
