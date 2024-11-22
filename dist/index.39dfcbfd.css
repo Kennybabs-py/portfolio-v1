@@ -427,7 +427,6 @@ img {
   margin: 20rem 0 0;
   padding: 0 5rem;
   position: relative;
-  overflow-x: hidden;
 }
 
 .projects__section .projects__title {
@@ -460,7 +459,7 @@ img {
   justify-content: flex-start;
   align-items: flex-start;
   gap: 2rem;
-  width: min(100%, 300px);
+  width: min(100%, 400px);
   min-height: 220px;
   padding: 2rem 3rem;
   display: flex;

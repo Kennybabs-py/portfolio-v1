@@ -6,7 +6,6 @@
   gap: 2rem;
   padding: 0 5rem;
   margin: 20rem 0 0;
-  overflow-x: hidden;
 
   .projects__title {
     @extend %title-100;
@@ -32,7 +31,7 @@
     margin: 4rem 0 0;
 
     .project__card {
-      width: min(100%, 300px);
+      width: min(100%, 400px);
       // border: 1px solid $color-alto;
       @include flex(flex-start, flex-start, column);
       gap: 2rem;
