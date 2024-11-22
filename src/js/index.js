@@ -1,6 +1,7 @@
 import Lenis from "lenis";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/dist/ScrollTrigger";
+import ScrollToPlugin from "gsap/ScrollToPlugin";
 import Flip from "gsap/dist/Flip";
 
 import { clock } from "./utils/clock";
@@ -10,6 +11,7 @@ import { preloadImages } from "./utils/preload-images";
 import SplitType from "split-type";
 
 gsap.registerPlugin(ScrollTrigger, Flip);
+gsap.registerPlugin(ScrollToPlugin);
 
 // ----------- Elements -------------------//
 //Lines
@@ -18,6 +20,7 @@ const longLines = document.querySelectorAll("hr");
 // Select the element that will be animated with Flip and its parent
 const heroImg = document.querySelector(".hero__img");
 const flipStartNode = document.querySelector(".hero__section");
+const contactBtn = document.querySelector(".contact__btn");
 
 // ----------- Lenis -------------------//
 const lenis = new Lenis();
@@ -92,7 +95,7 @@ const createFlipOnScrollAnimation = () => {
         ...flipConfig,
         ease: index === 0 ? "none" : flipConfig.ease, // Use 'none' easing for the first step
       };
-      tl.add(Flip.fit(heroImg, state, customFlipConfig), index ? "+=0.5" : 0);
+      tl.add(Flip.fit(heroImg, state, customFlipConfig), index ? "+=3" : 0);
     });
   });
 };
@@ -174,7 +177,7 @@ function contactTimeLine() {
         duration: 0.8,
         scrollTrigger: {
           trigger: char,
-          start: "top bottom-=10%",
+          start: "top bottom",
           end: "bottom bottom-=50px",
           scrub: true,
         },
@@ -183,8 +186,42 @@ function contactTimeLine() {
   });
 }
 
+function animateProjects() {
+  let section = document.querySelector(".projects__section");
+  let matchMedia = gsap.matchMedia(section);
+
+  matchMedia.add(
+    "(min-width: 1280px)",
+    (context) => {
+      gsap.fromTo(
+        ".projects__wrapper",
+        { y: "100px", opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          stagger: {
+            amount: 0.1,
+            grid: [3, 3],
+            axis: "x",
+            from: "center",
+          },
+          scrollTrigger: {
+            trigger: section,
+            start: "top bottom",
+            end: "100px",
+            scrub: true,
+            // scrub: 0.5,
+          },
+        }
+      );
+    },
+    section
+  );
+}
+
 // Init all animations
 const init = () => {
+  animateProjects();
   heroTimeLine();
   contactTimeLine();
   createFlipOnScrollAnimation();
@@ -211,6 +248,12 @@ const init = () => {
   setInterval(() => {
     clock();
   }, 1000);
+  contactBtn.addEventListener("click", () => {
+    gsap.to(window, {
+      duration: 1,
+      scrollTo: { y: "#contact" },
+    });
+  });
   window.addEventListener("resize", createFlipOnScrollAnimation);
 };
 

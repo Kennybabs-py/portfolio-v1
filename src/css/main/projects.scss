@@ -1,14 +1,15 @@
 .projects__section {
   position: relative;
   width: 100vw;
-  min-height: 80vh;
+  min-height: 50vh;
   //   @include flex(center, space-between, row);
   gap: 2rem;
   padding: 0 5rem;
   margin: 20rem 0 0;
+  overflow-x: hidden;
 
   .projects__title {
-    @extend %title-120;
+    @extend %title-100;
     @extend %link;
     display: inline-block;
     padding: 1rem;
@@ -27,17 +28,18 @@
   .projects__wrapper {
     width: 100%;
     @include flex(flex-start, flex-start, row wrap);
-    gap: 3rem;
-    margin: 8rem 0 0;
+    gap: 2rem;
+    margin: 4rem 0 0;
 
     .project__card {
-      width: min(100%, 450px);
-      border: 1px solid $color-alto;
+      width: min(100%, 300px);
+      // border: 1px solid $color-alto;
       @include flex(flex-start, flex-start, column);
       gap: 2rem;
-      padding: 1rem;
-      min-height: 250px;
+      padding: 2rem 3rem;
+      min-height: 220px;
       flex-grow: 1;
+      box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
 
       .title {
         @extend %title-30;
@@ -51,7 +53,7 @@
         span {
           border: 1px solid $color-alto;
           border-radius: 50px;
-          padding: 1rem;
+          padding: 1rem 3rem;
           width: max-content;
           @extend %description-16;
           text-transform: uppercase;

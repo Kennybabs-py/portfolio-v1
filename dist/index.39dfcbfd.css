@@ -77,17 +77,6 @@ html.lenis, html.lenis body {
   }
 }
 
-.navigation__list__link {
-  font-family: George X;
-  font-size: 2rem;
-}
-
-@media (width <= 764px) {
-  .navigation__list__link {
-    font-size: 4.8rem;
-  }
-}
-
 .contact__section .contact__wrapper a, .hobbies__section .hobbies__wrapper span, .projects__section .projects__wrapper .project__card .title {
   font-family: George X;
   font-size: 3rem;
@@ -99,27 +88,20 @@ html.lenis, html.lenis body {
   }
 }
 
-.skills__section .skills__wrapper .skill span {
+.contact__section .contact__title, .skills__section .skills__wrapper .skill span {
+  font-family: George X;
+  font-size: 6rem;
+}
+
+.hobbies__section .hobbies__title, .projects__section .projects__title, .skills__section .skills__title {
   font-family: George X;
   font-size: 10rem;
   line-height: 1;
 }
 
 @media (width <= 764px) {
-  .skills__section .skills__wrapper .skill span {
-    font-size: 12rem;
-  }
-}
-
-.hobbies__section .hobbies__title, .projects__section .projects__title, .skills__section .skills__title {
-  font-family: George X;
-  font-size: 12rem;
-  line-height: .82;
-}
-
-@media (width <= 764px) {
   .hobbies__section .hobbies__title, .projects__section .projects__title, .skills__section .skills__title {
-    font-size: 18rem;
+    font-size: 12rem;
   }
 }
 
@@ -134,15 +116,16 @@ html.lenis, html.lenis body {
   }
 }
 
-.navigation__list__link, .hobbies__section .hobbies__title, .projects__section .projects__wrapper .project__card .project__link, .projects__section .projects__title, .skills__section .skills__title {
+.hobbies__section .hobbies__title, .projects__section .projects__wrapper .project__card .project__link, .projects__section .projects__title, .skills__section .skills__title {
   vertical-align: top;
   display: inline-block;
   position: relative;
   overflow: hidden;
 }
 
-.navigation__list__link:after, .hobbies__section .hobbies__title:after, .projects__section .projects__wrapper .project__card .project__link:after, .projects__section .projects__title:after, .skills__section .skills__title:after {
+.hobbies__section .hobbies__title:after, .projects__section .projects__wrapper .project__card .project__link:after, .projects__section .projects__title:after, .skills__section .skills__title:after {
   content: "";
+  transform-origin: 0;
   background: currentColor;
   width: 100%;
   height: 1px;
@@ -150,19 +133,15 @@ html.lenis, html.lenis body {
   position: absolute;
   bottom: 0;
   left: 0;
-}
-
-.navigation__list__link:hover:after, .hobbies__section .hobbies__title:after, .projects__section .projects__wrapper .project__card .project__link:after, .projects__section .projects__title:after, .skills__section .skills__title:after {
-  transform-origin: 0;
   transform: scaleX(1);
 }
 
-.navigation__list__link:after, .hobbies__section .hobbies__title:hover:after, .projects__section .projects__wrapper .project__card .project__link:hover:after, .projects__section .projects__title:hover:after, .skills__section .skills__title:hover:after {
+.hobbies__section .hobbies__title:hover:after, .projects__section .projects__wrapper .project__card .project__link:hover:after, .projects__section .projects__title:hover:after, .skills__section .skills__title:hover:after {
   transform-origin: 100%;
   transform: scaleX(0);
 }
 
-.hobbies__section .hobbies__title, .projects__section .projects__wrapper .project__card .project__link, .projects__section .projects__title, .skills__section .skills__title, .navigation__list__link {
+.hobbies__section .hobbies__title, .projects__section .projects__wrapper .project__card .project__link, .projects__section .projects__title, .skills__section .skills__title {
   display: inline-block;
 }
 
@@ -208,8 +187,6 @@ html.lenis, html.lenis body {
 
 *, :after, :before {
   box-sizing: border-box;
-  -webkit-user-select: none;
-  user-select: none;
   margin: 0;
   padding: 0;
 }
@@ -217,7 +194,7 @@ html.lenis, html.lenis body {
 html {
   color: #ddd;
   background-color: #28282b;
-  font-size: .651042vw;
+  font-size: .520833vw;
   line-height: 1;
   overflow: hidden;
 }
@@ -229,7 +206,7 @@ html {
 }
 
 body {
-  font-family: Space Grotesk;
+  font-family: George X;
 }
 
 .js .loading:before, .js .loading:after {
@@ -311,8 +288,7 @@ img {
 
 .navigation {
   color: #f9f1e7;
-  pointer-events: none;
-  z-index: 3;
+  backdrop-filter: blur(5px);
   flex-flow: row;
   justify-content: space-between;
   align-items: center;
@@ -322,53 +298,9 @@ img {
   position: fixed;
 }
 
-.navigation span, .navigation a {
+.navigation span, .navigation button {
   text-transform: uppercase;
   font-size: 2rem;
-}
-
-.navigation__link {
-  pointer-events: auto;
-  width: 12.8rem;
-  height: 2rem;
-  font-size: 0;
-  transition: opacity .4s ease-in-out;
-  position: absolute;
-  top: 4rem;
-  left: 4rem;
-}
-
-.navigation__link:hover {
-  opacity: .5;
-}
-
-@media (width <= 764px) {
-  .navigation__link {
-    width: 27.9rem;
-    height: 4.3rem;
-    top: 5rem;
-    left: 5rem;
-  }
-}
-
-.navigation__link__icon, svg {
-  stroke: currentColor;
-  fill: currentColor;
-  width: 128px;
-  height: 20px;
-  display: block;
-}
-
-.navigation__list__item {
-  pointer-events: auto;
-  position: absolute;
-  top: 4rem;
-  right: 4rem;
-}
-
-.navigation__list__link {
-  line-height: 1;
-  display: block;
 }
 
 .hero__section {
@@ -383,7 +315,7 @@ img {
 }
 
 .hero__section .hero__title {
-  flex-flow: wrap;
+  flex-flow: column;
   justify-content: flex-start;
   align-items: flex-start;
   gap: 1rem;
@@ -396,16 +328,32 @@ img {
   line-height: 1;
 }
 
+@media (width <= 764px) {
+  .hero__section .hero__title h1 {
+    text-align: center;
+    font-size: 15rem;
+  }
+}
+
 .hero__section .hero__img {
-  aspect-ratio: 1 / .3;
+  aspect-ratio: 1 / .4;
   z-index: 10;
   will-change: width, transform, height, filter;
+  background-image: url("displaypicture.a0c4aab0.jpg");
   background-position: 50%;
   background-size: cover;
   border-radius: 50px;
   width: 35rem;
   display: inline-block;
   position: relative;
+}
+
+@media (width <= 764px) {
+  .hero__section .hero__img {
+    aspect-ratio: 1;
+    border-radius: 50px;
+    width: 25rem;
+  }
 }
 
 .hero__section .location, .hero__section span {
@@ -418,7 +366,7 @@ img {
 .skills__section {
   gap: 2rem;
   width: 100vw;
-  min-height: 100vh;
+  min-height: 40vh;
   padding: 0 5rem;
   position: relative;
 }
@@ -438,7 +386,7 @@ img {
 }
 
 .skills__section .skills__wrapper {
-  flex-flow: column;
+  flex-flow: wrap;
   justify-content: flex-start;
   align-items: flex-start;
   gap: 3rem;
@@ -448,7 +396,8 @@ img {
 }
 
 .skills__section .skills__wrapper .skill {
-  width: 100%;
+  flex-grow: 1;
+  width: min(100%, 300px);
   position: relative;
 }
 
@@ -474,10 +423,11 @@ img {
 .projects__section {
   gap: 2rem;
   width: 100vw;
-  min-height: 80vh;
+  min-height: 50vh;
   margin: 20rem 0 0;
   padding: 0 5rem;
   position: relative;
+  overflow-x: hidden;
 }
 
 .projects__section .projects__title {
@@ -498,23 +448,23 @@ img {
   flex-flow: wrap;
   justify-content: flex-start;
   align-items: flex-start;
-  gap: 3rem;
+  gap: 2rem;
   width: 100%;
-  margin: 8rem 0 0;
+  margin: 4rem 0 0;
   display: flex;
 }
 
 .projects__section .projects__wrapper .project__card {
-  border: 1px solid #ddd;
   flex-flow: column;
   flex-grow: 1;
   justify-content: flex-start;
   align-items: flex-start;
   gap: 2rem;
-  width: min(100%, 450px);
-  min-height: 250px;
-  padding: 1rem;
+  width: min(100%, 300px);
+  min-height: 220px;
+  padding: 2rem 3rem;
   display: flex;
+  box-shadow: 0 3px 8px #0000003d;
 }
 
 .projects__section .projects__wrapper .project__card .title {
@@ -534,7 +484,7 @@ img {
   border: 1px solid #ddd;
   border-radius: 50px;
   width: max-content;
-  padding: 1rem;
+  padding: 1rem 3rem;
 }
 
 .projects__section .projects__wrapper .project__card .project__link {
@@ -559,7 +509,7 @@ img {
 .hobbies__section .hobbies.content__img {
   aspect-ratio: 1;
   border-radius: 50%;
-  width: 100px;
+  width: 10rem;
   display: inline-block;
 }
 
@@ -586,13 +536,12 @@ img {
   min-height: 40vh;
   margin: 10rem 0 0;
   padding: 0 5rem;
+  overflow-x: hidden;
 }
 
 .contact__section .contact__title {
   text-transform: uppercase;
   padding: 1rem;
-  font-family: George X;
-  font-size: 15rem;
   font-weight: 300;
   display: inline-block;
 }

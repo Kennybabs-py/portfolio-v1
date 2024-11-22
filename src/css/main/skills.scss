@@ -1,7 +1,7 @@
 .skills__section {
   position: relative;
   width: 100vw;
-  min-height: 100vh;
+  min-height: 40vh;
   //   @include flex(center, space-between, row);
   gap: 2rem;
   padding: 0 5rem;
@@ -14,7 +14,7 @@
   }
 
   .skills__title {
-    @extend %title-120;
+    @extend %title-100;
     @extend %link;
     display: inline-block;
     padding: 1rem;
@@ -24,13 +24,14 @@
 
   .skills__wrapper {
     width: 100%;
-    @include flex(flex-start, flex-start, column);
+    @include flex(flex-start, flex-start, row wrap);
     gap: 3rem;
     margin: 8rem 0 0;
 
     .skill {
       position: relative;
-      width: 100%;
+      width: min(100%, 300px);
+      flex-grow: 1;
 
       hr {
         position: absolute;
@@ -43,7 +44,7 @@
       }
 
       span {
-        @extend %title-100;
+        @extend %title-60;
         display: block;
         padding: 1rem;
         width: 100%;
