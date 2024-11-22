@@ -15,22 +15,22 @@
       line-height: 1;
       font-weight: 300;
     }
-
-    figure {
-      position: relative;
-      width: 40rem;
-      aspect-ratio: 1/0.5;
-      border-radius: 50px;
-
-      img {
-        @extend %cover;
-        object-fit: cover;
-        border-radius: inherit;
-      }
-    }
   }
 
-  h3 {
+  .hero__img {
+    display: inline-block;
+    width: 35rem;
+    aspect-ratio: 1/0.3;
+    border-radius: 50px;
+    position: relative;
+    z-index: 10;
+    background-size: cover;
+    background-position: 50% 50%;
+    will-change: width, transform, height, filter;
+  }
+
+  .location,
+  span {
     font-size: 2.5rem;
     text-transform: uppercase;
     line-height: 1;

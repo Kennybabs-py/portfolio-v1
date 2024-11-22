@@ -1,0 +1,36 @@
+.contact__section {
+  //   position: sticky;
+  //   top: 0;
+  width: 100vw;
+  min-height: 40vh;
+  padding: 0 5rem;
+  margin: 10rem 0 0;
+
+  .contact__title {
+    // @extend %title-120;
+    // @extend %link;
+    font-size: 15rem;
+    font-family: $font-george-x;
+    font-weight: 300;
+    display: inline-block;
+    padding: 1rem;
+    text-transform: uppercase;
+    // line-height: 0.7;
+  }
+
+  .contact__wrapper {
+    width: 100%;
+    @include flex(flex-start, flex-start, row wrap);
+    gap: 3rem;
+    margin: 2rem 0 0;
+
+    a {
+      @extend %title-30;
+      border: 1px solid $color-alto;
+      border-radius: 100px;
+      padding: 1rem 3rem;
+      width: max-content;
+      text-transform: uppercase;
+    }
+  }
+}

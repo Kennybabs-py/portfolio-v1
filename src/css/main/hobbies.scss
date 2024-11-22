@@ -1,0 +1,41 @@
+.hobbies__section {
+  position: relative;
+  width: 100vw;
+  min-height: 20vh;
+  //   @include flex(center, space-between, row);
+  padding: 0 5rem;
+  margin: 20rem 0 0;
+
+  .hobbies__title {
+    @extend %title-120;
+    @extend %link;
+    display: inline-block;
+    padding: 1rem;
+    text-transform: uppercase;
+    // line-height: 0.7;
+    font-weight: 300;
+  }
+
+  .hobbies.content__img {
+    display: inline-block;
+    width: 100px;
+    aspect-ratio: 1/1;
+    border-radius: 50%;
+  }
+
+  .hobbies__wrapper {
+    width: 100%;
+    @include flex(flex-start, flex-start, row wrap);
+    gap: 3rem;
+    margin: 8rem 0 0;
+
+    span {
+      @extend %title-30;
+      border: 1px solid $color-alto;
+      border-radius: 100px;
+      padding: 2rem;
+      width: max-content;
+      text-transform: uppercase;
+    }
+  }
+}

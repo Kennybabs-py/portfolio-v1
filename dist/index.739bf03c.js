@@ -592,23 +592,194 @@ var _gsap = require("gsap");
 var _gsapDefault = parcelHelpers.interopDefault(_gsap);
 var _scrollTrigger = require("gsap/dist/ScrollTrigger");
 var _scrollTriggerDefault = parcelHelpers.interopDefault(_scrollTrigger);
+var _flip = require("gsap/dist/Flip");
+var _flipDefault = parcelHelpers.interopDefault(_flip);
 var _clock = require("./utils/clock");
-(0, _gsapDefault.default).registerPlugin((0, _scrollTriggerDefault.default));
+var _blurScrollEffect = require("./animations/blur-scroll-effect");
+var _textRevealEffect = require("./animations/text-reveal-effect");
+var _preloadImages = require("./utils/preload-images");
+var _splitType = require("split-type");
+var _splitTypeDefault = parcelHelpers.interopDefault(_splitType);
+(0, _gsapDefault.default).registerPlugin((0, _scrollTriggerDefault.default), (0, _flipDefault.default));
+// ----------- Elements -------------------//
+//Lines
+const longLines = document.querySelectorAll("hr");
+// Flip Images
+// Select the element that will be animated with Flip and its parent
+const heroImg = document.querySelector(".hero__img");
+const flipStartNode = document.querySelector(".hero__section");
 // ----------- Lenis -------------------//
 const lenis = new (0, _lenisDefault.default)();
-lenis.on("scroll", (e)=>{
-    console.log(e);
-});
 lenis.on("scroll", (0, _scrollTriggerDefault.default).update);
 (0, _gsapDefault.default).ticker.add((time)=>{
     lenis.raf(time * 1000);
 });
 (0, _gsapDefault.default).ticker.lagSmoothing(0);
-setInterval(()=>{
-    (0, _clock.clock)();
-}, 1000);
+// ----------- Animations -------------------//
+// Lines
+function animateLines() {
+    longLines.forEach((el)=>{
+        (0, _gsapDefault.default).fromTo(el, {
+            width: "0%",
+            willChange: "width"
+        }, {
+            width: "100%",
+            ease: "power3.in",
+            stagger: 0.1,
+            duration: 3,
+            scrollTrigger: {
+                trigger: el,
+                start: "top bottom",
+                end: "bottom center+=15%",
+                scrub: true
+            }
+        });
+    });
+}
+// Flip
+// Select all elements with a `data-step` attribute for the Flip animation steps
+const stepElements = [
+    ...document.querySelectorAll("[data-step]")
+];
+let flipCtx;
+// Function to create a Flip animation tied to scroll events
+const createFlipOnScrollAnimation = ()=>{
+    // Revert any previous animation context
+    flipCtx && flipCtx.revert();
+    flipCtx = (0, _gsapDefault.default).context(()=>{
+        const flipConfig = {
+            duration: 1,
+            ease: "sine.inOut"
+        };
+        // Store Flip states for each step element
+        const states = stepElements.map((stepElement)=>(0, _flipDefault.default).getState(stepElement));
+        // Create a GSAP timeline with ScrollTrigger for the Flip animation
+        const tl = (0, _gsapDefault.default).timeline({
+            scrollTrigger: {
+                trigger: flipStartNode,
+                start: "clamp(center center)",
+                endTrigger: stepElements[stepElements.length - 1],
+                end: "clamp(center center)",
+                scrub: true,
+                immediateRender: false
+            }
+        });
+        // Add Flip animations to the timeline for each state
+        states.forEach((state, index)=>{
+            const customFlipConfig = {
+                ...flipConfig,
+                ease: index === 0 ? "none" : flipConfig.ease
+            };
+            tl.add((0, _flipDefault.default).fit(heroImg, state, customFlipConfig), index ? "+=0.5" : 0);
+        });
+    });
+};
+const heroTitle = new (0, _splitTypeDefault.default)(".hero__title h1", {
+    types: "chars"
+});
+const heroSpans = new (0, _splitTypeDefault.default)(".hero__section span", {
+    types: "words"
+});
+const contactTitle = new (0, _splitTypeDefault.default)(".contact__title", {
+    types: "chars"
+});
+function heroTimeLine() {
+    const timeline = (0, _gsapDefault.default).timeline();
+    timeline.fromTo(heroSpans.words, {
+        x: "100px",
+        opacity: 0
+    }, {
+        x: 0,
+        opacity: 1,
+        ease: "power3.inOut",
+        stagger: 0.1,
+        duration: 0.8
+    }).fromTo(heroTitle.chars, {
+        x: "100px",
+        opacity: 0
+    }, {
+        x: 0,
+        opacity: 1,
+        ease: "power3.inOut",
+        stagger: 0.1,
+        duration: 0.5
+    }, "-=1").fromTo(".hero__img", {
+        width: "0",
+        opacity: 0
+    }, {
+        width: "auto",
+        opacity: 1,
+        ease: "power3.inOut",
+        duration: 0.8
+    }, "-=1");
+}
+function contactTimeLine() {
+    contactTitle.chars.forEach((char, index)=>{
+        let xdirection = index < Math.ceil(contactTitle.chars.length / 2) ? -200 : 200;
+        let ydirection = index % 2 === 0 ? -50 : 50;
+        (0, _gsapDefault.default).fromTo(char, {
+            x: `${xdirection}px`,
+            y: `${ydirection}px`,
+            opacity: 0,
+            rotate: xdirection - 110
+        }, {
+            x: 0,
+            y: 0,
+            rotate: 0,
+            opacity: 1,
+            ease: "power3.inOut",
+            stagger: 0.1,
+            duration: 0.8,
+            scrollTrigger: {
+                trigger: char,
+                start: "top bottom-=10%",
+                end: "bottom bottom-=50px",
+                scrub: true
+            }
+        });
+    });
+}
+// Init all animations
+const init = ()=>{
+    heroTimeLine();
+    contactTimeLine();
+    createFlipOnScrollAnimation();
+    const blureffects = [
+        {
+            selector: "[data-effect-blur]",
+            effect: (0, _blurScrollEffect.BlurScrollEffect)
+        }
+    ];
+    // Iterate over each effect configuration and apply the effect to all matching elements
+    blureffects.forEach(({ selector, effect })=>{
+        document.querySelectorAll(selector).forEach((el)=>{
+            new effect(el, "chars");
+        });
+    });
+    const titleffects = [
+        {
+            selector: "[data-title]",
+            effect: (0, _textRevealEffect.TextRevealEffect)
+        }
+    ];
+    // Iterate over each effect configuration and apply the effect to all matching elements
+    titleffects.forEach(({ selector, effect })=>{
+        document.querySelectorAll(selector).forEach((el)=>{
+            new effect(el, "words");
+        });
+    });
+    animateLines();
+    setInterval(()=>{
+        (0, _clock.clock)();
+    }, 1000);
+    window.addEventListener("resize", createFlipOnScrollAnimation);
+};
+(0, _preloadImages.preloadImages)(".hero__img").then(()=>{
+    document.body.classList.remove("loading");
+    init();
+});
 
-},{"./utils/clock":"gTpoM","lenis":"JS2ak","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","gsap/dist/ScrollTrigger":"CiOCQ"}],"gTpoM":[function(require,module,exports,__globalThis) {
+},{"./utils/clock":"gTpoM","lenis":"JS2ak","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","gsap/dist/ScrollTrigger":"CiOCQ","./animations/blur-scroll-effect":"iniss","./animations/text-reveal-effect":"6r5Mq","gsap/dist/Flip":"lzAgJ","./utils/preload-images":"cnkqH","split-type":"fvGAG"}],"gTpoM":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "clock", ()=>clock);
@@ -7548,6 +7719,2794 @@ var CSSPlugin = {
         value: true
     });
     else delete window.default;
+});
+
+},{}],"iniss":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// Defines a class to create scroll-triggered animation effects on text.
+parcelHelpers.export(exports, "BlurScrollEffect", ()=>BlurScrollEffect);
+var _textSplitter = require("../utils/text-splitter");
+var _gsap = require("gsap");
+var _gsapDefault = parcelHelpers.interopDefault(_gsap);
+class BlurScrollEffect {
+    constructor(textElement, splitType = "chars"){
+        // Check if the provided element is valid.
+        if (!textElement || !(textElement instanceof HTMLElement)) throw new Error("Invalid text element provided.");
+        this.textElement = textElement;
+        this.splitType = splitType;
+        // Set up the effect for the provided text element.
+        this.initializeEffect();
+    }
+    // Sets up the initial text effect on the provided element.
+    initializeEffect() {
+        // Callback to re-trigger animations on resize.
+        const textResizeCallback = ()=>this.scroll();
+        // Split text for animation and store the reference.
+        this.splitter = new (0, _textSplitter.TextSplitter)(this.textElement, {
+            resizeCallback: textResizeCallback,
+            splitTypeTypes: this.splitType
+        });
+        // Trigger the initial scroll effect.
+        this.scroll();
+    }
+    // Animates text based on the scroll position.
+    scroll() {
+        // Query all individual characters in the line for animation.
+        let elements;
+        if (this.splitType === "chars") elements = this.splitter.getChars();
+        else if (this.splitType === "words") elements = this.splitter.getWords();
+        else elements = this.splitter.getLines();
+        (0, _gsapDefault.default).fromTo(elements, {
+            filter: "blur(10px) brightness(0%)",
+            willChange: "filter"
+        }, {
+            ease: "none",
+            filter: "blur(0px) brightness(100%)",
+            stagger: 0.05,
+            scrollTrigger: {
+                trigger: this.textElement,
+                start: "top bottom",
+                end: "bottom center+=15%",
+                scrub: true
+            }
+        });
+    }
+}
+
+},{"../utils/text-splitter":"eXT0Z","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC"}],"eXT0Z":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// Defines a class to split text into lines, words and characters for animation.
+parcelHelpers.export(exports, "TextSplitter", ()=>TextSplitter);
+var _splitType = require("split-type");
+var _splitTypeDefault = parcelHelpers.interopDefault(_splitType);
+var _commonJs = require("./common.js");
+class TextSplitter {
+    constructor(textElement, options = {}){
+        // Ensure the textElement is a valid HTMLElement.
+        if (!textElement || !(textElement instanceof HTMLElement)) throw new Error("Invalid text element provided.");
+        const { resizeCallback, splitTypeTypes } = options;
+        this.textElement = textElement;
+        // Assign the resize callback if provided and is a function, otherwise null.
+        this.onResize = typeof resizeCallback === "function" ? resizeCallback : null;
+        const splitOptions = splitTypeTypes ? {
+            types: splitTypeTypes
+        } : {};
+        this.splitText = new (0, _splitTypeDefault.default)(this.textElement, splitOptions);
+        // Initialize ResizeObserver to re-split text on resize events, if a resize callback is provided.
+        if (this.onResize) this.initResizeObserver(); // Set up observer to detect resize events.
+    }
+    // Sets up ResizeObserver to re-split text on element resize.
+    initResizeObserver() {
+        this.previousContainerWidth = null; // Track element width to detect resize.
+        let resizeObserver = new ResizeObserver((0, _commonJs.debounce)((entries)=>this.handleResize(entries), 100));
+        resizeObserver.observe(this.textElement); // Start observing the text element.
+    }
+    // Handles element resize, re-splitting text if width changes.
+    handleResize(entries) {
+        const [{ contentRect }] = entries;
+        const width = Math.floor(contentRect.width);
+        // If element width changed, re-split text and call resize callback.
+        if (this.previousContainerWidth && this.previousContainerWidth !== width) {
+            this.splitText.split(); // Re-split text for new width.
+            this.onResize(); // Execute the callback function.
+        }
+        this.previousContainerWidth = width; // Update stored width.
+    }
+    // Returns the lines created by splitting the text element.
+    getLines() {
+        return this.splitText.lines;
+    }
+    // Returns the words created by splitting the text element.
+    getWords() {
+        return this.splitText.words;
+    }
+    // Returns the chars created by splitting the text element.
+    getChars() {
+        return this.splitText.chars;
+    }
+}
+
+},{"split-type":"fvGAG","./common.js":"5dJnk","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fvGAG":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "default", ()=>SplitType);
+/**
+ * SplitType
+ * https://github.com/lukePeavey/SplitType
+ * @version 0.3.4
+ * @author Luke Peavey <lwpeavey@gmail.com>
+ */ // Polyfill the following DOM methods that are not supported in IE 11.
+(function() {
+    function append() {
+        var length = arguments.length;
+        for(var i = 0; i < length; i++){
+            var node = i < 0 || arguments.length <= i ? undefined : arguments[i];
+            if (node.nodeType === 1 || node.nodeType === 11) this.appendChild(node);
+            else this.appendChild(document.createTextNode(String(node)));
+        }
+    }
+    function replaceChildren() {
+        while(this.lastChild)this.removeChild(this.lastChild);
+        if (arguments.length) this.append.apply(this, arguments);
+    }
+    function replaceWith() {
+        var parent = this.parentNode;
+        for(var _len = arguments.length, nodes = new Array(_len), _key = 0; _key < _len; _key++)nodes[_key] = arguments[_key];
+        var i = nodes.length;
+        if (!parent) return;
+        if (!i) parent.removeChild(this);
+        while(i--){
+            var node = nodes[i];
+            if (typeof node !== 'object') node = this.ownerDocument.createTextNode(node);
+            else if (node.parentNode) node.parentNode.removeChild(node);
+            if (!i) parent.replaceChild(node, this);
+            else parent.insertBefore(this.previousSibling, node);
+        }
+    }
+    if (typeof Element !== 'undefined') {
+        if (!Element.prototype.append) {
+            Element.prototype.append = append;
+            DocumentFragment.prototype.append = append;
+        }
+        if (!Element.prototype.replaceChildren) {
+            Element.prototype.replaceChildren = replaceChildren;
+            DocumentFragment.prototype.replaceChildren = replaceChildren;
+        }
+        if (!Element.prototype.replaceWith) {
+            Element.prototype.replaceWith = replaceWith;
+            DocumentFragment.prototype.replaceWith = replaceWith;
+        }
+    }
+})();
+function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) throw new TypeError("Cannot call a class as a function");
+}
+function _defineProperties(target, props) {
+    for(var i = 0; i < props.length; i++){
+        var descriptor = props[i];
+        descriptor.enumerable = descriptor.enumerable || false;
+        descriptor.configurable = true;
+        if ("value" in descriptor) descriptor.writable = true;
+        Object.defineProperty(target, descriptor.key, descriptor);
+    }
+}
+function _createClass(Constructor, protoProps, staticProps) {
+    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) _defineProperties(Constructor, staticProps);
+    return Constructor;
+}
+function _defineProperty(obj, key, value) {
+    if (key in obj) Object.defineProperty(obj, key, {
+        value: value,
+        enumerable: true,
+        configurable: true,
+        writable: true
+    });
+    else obj[key] = value;
+    return obj;
+}
+function ownKeys(object, enumerableOnly) {
+    var keys = Object.keys(object);
+    if (Object.getOwnPropertySymbols) {
+        var symbols = Object.getOwnPropertySymbols(object);
+        if (enumerableOnly) symbols = symbols.filter(function(sym) {
+            return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+        });
+        keys.push.apply(keys, symbols);
+    }
+    return keys;
+}
+function _objectSpread2(target) {
+    for(var i = 1; i < arguments.length; i++){
+        var source = arguments[i] != null ? arguments[i] : {};
+        if (i % 2) ownKeys(Object(source), true).forEach(function(key) {
+            _defineProperty(target, key, source[key]);
+        });
+        else if (Object.getOwnPropertyDescriptors) Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+        else ownKeys(Object(source)).forEach(function(key) {
+            Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+        });
+    }
+    return target;
+}
+function _slicedToArray(arr, i) {
+    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
+}
+function _toConsumableArray(arr) {
+    return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
+}
+function _arrayWithoutHoles(arr) {
+    if (Array.isArray(arr)) return _arrayLikeToArray(arr);
+}
+function _arrayWithHoles(arr) {
+    if (Array.isArray(arr)) return arr;
+}
+function _iterableToArray(iter) {
+    if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
+}
+function _iterableToArrayLimit(arr, i) {
+    if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
+    try {
+        for(var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true){
+            _arr.push(_s.value);
+            if (i && _arr.length === i) break;
+        }
+    } catch (err) {
+        _d = true;
+        _e = err;
+    } finally{
+        try {
+            if (!_n && _i["return"] != null) _i["return"]();
+        } finally{
+            if (_d) throw _e;
+        }
+    }
+    return _arr;
+}
+function _unsupportedIterableToArray(o, minLen) {
+    if (!o) return;
+    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
+    var n = Object.prototype.toString.call(o).slice(8, -1);
+    if (n === "Object" && o.constructor) n = o.constructor.name;
+    if (n === "Map" || n === "Set") return Array.from(o);
+    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+}
+function _arrayLikeToArray(arr, len) {
+    if (len == null || len > arr.length) len = arr.length;
+    for(var i = 0, arr2 = new Array(len); i < len; i++)arr2[i] = arr[i];
+    return arr2;
+}
+function _nonIterableSpread() {
+    throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
+function _nonIterableRest() {
+    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
+/**
+ * Shallow merges the properties of an object with the target object. Only
+ * includes properties that exist on the target object. Non-writable properties
+ * on the target object will not be over-written.
+ *
+ * @param {Object} target
+ * @param {Object} object
+ */ function extend(target, object) {
+    return Object.getOwnPropertyNames(Object(target)).reduce(function(extended, key) {
+        var currentValue = Object.getOwnPropertyDescriptor(Object(target), key);
+        var newValue = Object.getOwnPropertyDescriptor(Object(object), key);
+        return Object.defineProperty(extended, key, newValue || currentValue);
+    }, {});
+}
+/**
+ * Checks if given value is a string
+ *
+ * @param {any} value
+ * @return {boolean} `true` if `value` is a string, else `false`
+ */ function isString(value) {
+    return typeof value === 'string';
+}
+function isArray(value) {
+    return Array.isArray(value);
+}
+/**
+ * Parses user supplied settings objects.
+ */ function parseSettings() {
+    var settings = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    var object = extend(settings); // `split` may be used as an alias for the `types` option
+    // Parse the `types` settings into an array of valid split types.
+    // If `types` is explicitly set to an empty string or array, text will not be
+    // split at all.
+    var types;
+    if (object.types !== undefined) types = object.types;
+    else if (object.split !== undefined) types = object.split;
+    if (types !== undefined) object.types = (isString(types) || isArray(types) ? String(types) : '').split(',').map(function(type) {
+        return String(type).trim();
+    }).filter(function(type) {
+        return /((line)|(word)|(char))/i.test(type);
+    });
+     // Support `position: absolute` as an alias for `absolute: true`
+    if (object.absolute || object.position) object.absolute = object.absolute || /absolute/.test(settings.position);
+    return object;
+}
+/**
+ * Takes a list of `types` and returns an object
+ *
+ * @param {string | string[]} value a comma separated list of split types
+ * @return {{lines: boolean, words: boolean, chars: boolean}}
+ */ function parseTypes(value) {
+    var types = isString(value) || isArray(value) ? String(value) : '';
+    return {
+        none: !types,
+        lines: /line/i.test(types),
+        words: /word/i.test(types),
+        chars: /char/i.test(types)
+    };
+}
+/**
+ * Returns true if `value` is a non-null object.
+ * @param {any} value
+ * @return {boolean}
+ */ function isObject(value) {
+    return value !== null && typeof value === 'object';
+}
+/**
+ * Returns true if `input` is one of the following:
+ * - `Element`
+ * - `Text`
+ * - `DocumentFragment`
+ */ function isNode(input) {
+    return isObject(input) && /^(1|3|11)$/.test(input.nodeType);
+}
+/**
+ * Checks if `value` is a valid array-like length.
+ * Original source: Lodash
+ *
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+ * @example
+ *
+ * _.isLength(3)
+ * // => true
+ *
+ * _.isLength(Number.MIN_VALUE)
+ * // => false
+ *
+ * _.isLength(Infinity)
+ * // => false
+ *
+ * _.isLength('3')
+ * // => false
+ */ function isLength(value) {
+    return typeof value === 'number' && value > -1 && value % 1 === 0;
+}
+/**
+ * Checks if `value` is an array-like object
+ * @param {any} value
+ * @return {boolean} true if `value` is array-like`, else `false`
+ * @example
+ * isArrayLike(new Array())
+ * // => true
+ *
+ * isArrayLike(document.querySelectorAll('div'))
+ * // => true
+ *
+ * isArrayLike(document.getElementsByTagName('div'))
+ * // => true
+ *
+ * isArrayLike(() => {})
+ * // => false
+ *
+ * isArrayLike({foo: 'bar'})
+ * // => false
+ *
+ * * isArrayLike(null)
+ * // => false
+ */ function isArrayLike(value) {
+    return isObject(value) && isLength(value.length);
+}
+/**
+ * Coerces `value` to an `Array`.
+ *
+ * @param {any} value
+ * @return {any[]}
+ * @example
+ * // If `value` is any `Array`, returns original `Array`
+ * let arr = [1, 2]
+ * toArray(arr)
+ * // => arr
+ *
+ * // If `value` is an `ArrayLike`, its equivalent to `Array.from(value)`
+ * let nodeList = document.querySelectorAll('div')
+ * toArray(nodeList)
+ * // => HTMLElement[] s
+ *
+ * // If value is falsy, returns empty array
+ * toArray(null)
+ * // => []
+ *
+ * // For any other type of value, its equivalent to `Array.of(value)`
+ * let element = document.createElement('div')
+ * toArray(element)
+ * // => [element]
+ *
+ */ function toArray(value) {
+    if (isArray(value)) return value;
+    if (value == null) return [];
+    return isArrayLike(value) ? Array.prototype.slice.call(value) : [
+        value
+    ];
+}
+/**
+ * Processes target elements for the splitType function.
+ *
+ * @param {any} target Can be one of the following:
+ * 1. `string` - A css selector
+ * 2. `HTMLElement` - A single element
+ * 3. `NodeList` - A nodeList
+ * 4. `Element[]` - An array of elements
+ * 5. `Array<NodeList|Element[]>` - An nested array of elements
+ * @returns {Element[]} A flat array HTML elements
+ * @return A flat array of elements or empty array if no elements are found
+ */ function getTargetElements(target) {
+    var elements = target; // If `target` is a selector string...
+    if (isString(target)) {
+        if (/^(#[a-z]\w+)$/.test(target.trim())) // If `target` is an ID, use `getElementById`
+        elements = document.getElementById(target.trim().slice(1));
+        else // Else use `querySelectorAll`
+        elements = document.querySelectorAll(target);
+    } // Return a flattened array of elements
+    return toArray(elements).reduce(function(result, element) {
+        return [].concat(_toConsumableArray(result), _toConsumableArray(toArray(element).filter(isNode)));
+    }, []);
+}
+var entries = Object.entries;
+var expando = "_splittype";
+var cache = {};
+var uid = 0;
+/**
+ * Stores data associated with DOM elements or other objects. This is a
+ * simplified version of jQuery's data method.
+ *
+ * @signature Data(owner)
+ * @description Get the data store object for the given owner.
+ * @param {Object} owner the object that data will be associated with.
+ * @return {Object} the data object for given `owner`. If no data exists
+ *     for the given object, creates a new data store and returns it.
+ *
+ * @signature Data(owner, key)
+ * @description Get the value
+ * @param {Object} owner
+ * @param {string} key
+ * @return {any} the value of the provided key. If key does not exist, returns
+ *     undefined.
+ *
+ * @signature Data(owner, key, value)
+ * @description Sets the given key/value pair in data store
+ * @param {Object} owner
+ * @param {string} key
+ * @param {any} value
+ */ function set(owner, key, value) {
+    if (!isObject(owner)) {
+        console.warn('[data.set] owner is not an object');
+        return null;
+    }
+    var id = owner[expando] || (owner[expando] = ++uid);
+    var data = cache[id] || (cache[id] = {});
+    if (value === undefined) {
+        if (!!key && Object.getPrototypeOf(key) === Object.prototype) cache[id] = _objectSpread2(_objectSpread2({}, data), key);
+    } else if (key !== undefined) data[key] = value;
+    return value;
+}
+function get(owner, key) {
+    var id = isObject(owner) ? owner[expando] : null;
+    var data = id && cache[id] || {};
+    if (key === undefined) return data;
+    return data[key];
+}
+/**
+ * Remove all data associated with the given element
+ */ function remove(element) {
+    var id = element && element[expando];
+    if (id) {
+        delete element[id];
+        delete cache[id];
+    }
+}
+/**
+ * Clear all cached data
+ */ function clear() {
+    Object.keys(cache).forEach(function(key) {
+        delete cache[key];
+    });
+}
+/**
+ * Remove all temporary data from the store.
+ */ function cleanup() {
+    entries(cache).forEach(function(_ref) {
+        var _ref2 = _slicedToArray(_ref, 2), id = _ref2[0], _ref2$ = _ref2[1], isRoot = _ref2$.isRoot, isSplit = _ref2$.isSplit;
+        if (!isRoot || !isSplit) {
+            cache[id] = null;
+            delete cache[id];
+        }
+    });
+}
+/**
+ * Splits a string into an array of words.
+ *
+ * @param {string} string
+ * @param {string | RegExp} [separator = ' ']
+ * @return {string[]} Array of words
+ */ function toWords(value) {
+    var separator = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : ' ';
+    var string = value ? String(value) : '';
+    return string.trim().replace(/\s+/g, ' ').split(separator);
+}
+/**
+ * Based on lodash#split <https://lodash.com/license>
+ * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters &
+ * Editors
+ */ var rsAstralRange = "\\ud800-\\udfff";
+var rsComboMarksRange = "\\u0300-\\u036f\\ufe20-\\ufe23";
+var rsComboSymbolsRange = "\\u20d0-\\u20f0";
+var rsVarRange = "\\ufe0e\\ufe0f";
+/** Used to compose unicode capture groups. */ var rsAstral = "[".concat(rsAstralRange, "]");
+var rsCombo = "[".concat(rsComboMarksRange).concat(rsComboSymbolsRange, "]");
+var rsFitz = "\\ud83c[\\udffb-\\udfff]";
+var rsModifier = "(?:".concat(rsCombo, "|").concat(rsFitz, ")");
+var rsNonAstral = "[^".concat(rsAstralRange, "]");
+var rsRegional = "(?:\\ud83c[\\udde6-\\uddff]){2}";
+var rsSurrPair = "[\\ud800-\\udbff][\\udc00-\\udfff]";
+var rsZWJ = "\\u200d";
+/** Used to compose unicode regexes. */ var reOptMod = "".concat(rsModifier, "?");
+var rsOptVar = "[".concat(rsVarRange, "]?");
+var rsOptJoin = '(?:' + rsZWJ + '(?:' + [
+    rsNonAstral,
+    rsRegional,
+    rsSurrPair
+].join('|') + ')' + rsOptVar + reOptMod + ')*';
+var rsSeq = rsOptVar + reOptMod + rsOptJoin;
+var rsSymbol = "(?:".concat([
+    "".concat(rsNonAstral).concat(rsCombo, "?"),
+    rsCombo,
+    rsRegional,
+    rsSurrPair,
+    rsAstral
+].join('|'), "\n)");
+/** Used to match [string symbols](https://mathiasbynens.be/notes/javascript-unicode). */ var reUnicode = RegExp("".concat(rsFitz, "(?=").concat(rsFitz, ")|").concat(rsSymbol).concat(rsSeq), 'g');
+/** Used to detect strings with [zero-width joiners or code points from the astral planes](http://eev.ee/blog/2015/09/12/dark-corners-of-unicode/). */ var unicodeRange = [
+    rsZWJ,
+    rsAstralRange,
+    rsComboMarksRange,
+    rsComboSymbolsRange,
+    rsVarRange
+];
+var reHasUnicode = RegExp("[".concat(unicodeRange.join(''), "]"));
+/**
+ * Converts an ASCII `string` to an array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the converted array.
+ */ function asciiToArray(string) {
+    return string.split('');
+}
+/**
+ * Checks if `string` contains Unicode symbols.
+ *
+ * @private
+ * @param {string} string The string to inspect.
+ * @returns {boolean} Returns `true` if a symbol is found, else `false`.
+ */ function hasUnicode(string) {
+    return reHasUnicode.test(string);
+}
+/**
+ * Converts a Unicode `string` to an array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the converted array.
+ */ function unicodeToArray(string) {
+    return string.match(reUnicode) || [];
+}
+/**
+ * Converts `string` to an array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the converted array.
+ */ function stringToArray(string) {
+    return hasUnicode(string) ? unicodeToArray(string) : asciiToArray(string);
+}
+/**
+ * Converts `value` to a string. An empty string is returned for `null`
+ * and `undefined` values.
+ *
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ * @example
+ *
+ * _.toString(null);
+ * // => ''
+ *
+ * _.toString([1, 2, 3]);
+ * // => '1,2,3'
+ */ function toString(value) {
+    return value == null ? '' : String(value);
+}
+/**
+ * Splits `string` into an array of characters. If `separator` is omitted,
+ * it behaves likes split.split('').
+ *
+ * Unlike native string.split(''), it can split strings that contain unicode
+ * characters like emojis and symbols.
+ *
+ * @param {string} [string=''] The string to split.
+ * @param {RegExp|string} [separator=''] The separator pattern to split by.
+ * @returns {Array} Returns the string segments.
+ * @example
+ * toChars('foo');
+ * // => ['f', 'o', 'o']
+ *
+ * toChars('foo bar');
+ * // => ["f", "o", "o", " ", "b", "a", "r"]
+ *
+ * toChars('f😀o');
+ * // => ['f', '😀', 'o']
+ *
+ * toChars('f-😀-o', /-/);
+ * // => ['f', '😀', 'o']
+ *
+ */ function toChars(string) {
+    var separator = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+    string = toString(string);
+    if (string && isString(string)) {
+        if (!separator && hasUnicode(string)) return stringToArray(string);
+    }
+    return string.split(separator);
+}
+/**
+ * Create an HTML element with the the given attributes
+ *
+ * attributes can include standard HTML attribute, as well as the following
+ * "special" properties:
+ *   - children: HTMLElement | ArrayLike<HTMLElement>
+ *   - textContent: string
+ *   - innerHTML: string
+ *
+ * @param {string} name
+ * @param  {Object} [attributes]
+ * @returns {HTMLElement}
+ */ function createElement(name, attributes) {
+    var element = document.createElement(name);
+    if (!attributes) // When called without the second argument, its just return the result
+    // of `document.createElement`
+    return element;
+    Object.keys(attributes).forEach(function(attribute) {
+        var rawValue = attributes[attribute];
+        var value = isString(rawValue) ? rawValue.trim() : rawValue; // Ignore attribute if the value is `null` or an empty string
+        if (value === null || value === '') return;
+        if (attribute === 'children') // Children can be one or more Elements or DOM strings
+        element.append.apply(element, _toConsumableArray(toArray(value)));
+        else // Handle standard HTML attributes
+        element.setAttribute(attribute, value);
+    });
+    return element;
+}
+var defaults = {
+    splitClass: '',
+    lineClass: 'line',
+    wordClass: 'word',
+    charClass: 'char',
+    types: [
+        'lines',
+        'words',
+        'chars'
+    ],
+    absolute: false,
+    tagName: 'div'
+};
+/**
+ * Splits the text content of a single TextNode into words and/or characters.
+ *
+ * This functions gets called for every text node inside the target element. It
+ * replaces the text node with a document fragment containing the split text.
+ * Returns an array of the split word and character elements from this node.
+ *
+ * @param {TextNode} textNode
+ * @param {Object} settings
+ * @return {{words: Element[], chars: Element[]}}
+ */ function splitWordsAndChars(textNode, settings) {
+    settings = extend(defaults, settings); // The split types
+    var types = parseTypes(settings.types); // the tag name for split text nodes
+    var TAG_NAME = settings.tagName; // value of the text node
+    var VALUE = textNode.nodeValue; // `splitText` is a wrapper to hold the HTML structure
+    var splitText = document.createDocumentFragment(); // Arrays of split word and character elements
+    var words = [];
+    var chars = [];
+    if (/^\s/.test(VALUE)) splitText.append(' ');
+     // Create an array of wrapped word elements.
+    words = toWords(VALUE).reduce(function(result, WORD, idx, arr) {
+        // Let `wordElement` be the wrapped element for the current word
+        var wordElement;
+        var characterElementsForCurrentWord; // -> If splitting text into characters...
+        if (types.chars) // Iterate through the characters in the current word
+        characterElementsForCurrentWord = toChars(WORD).map(function(CHAR) {
+            var characterElement = createElement(TAG_NAME, {
+                "class": "".concat(settings.splitClass, " ").concat(settings.charClass),
+                style: 'display: inline-block;',
+                children: CHAR
+            });
+            set(characterElement, 'isChar', true);
+            chars = [].concat(_toConsumableArray(chars), [
+                characterElement
+            ]);
+            return characterElement;
+        });
+         // END IF;
+        if (types.words || types.lines) {
+            // -> If Splitting Text Into Words...
+            //    Create an element to wrap the current word. If we are also
+            //    splitting text into characters, the word element will contain the
+            //    wrapped character nodes for this word. If not, it will contain the
+            //    plain text content (WORD)
+            wordElement = createElement(TAG_NAME, {
+                "class": "".concat(settings.wordClass, " ").concat(settings.splitClass),
+                style: "display: inline-block; ".concat(types.words && settings.absolute ? "position: relative;" : ''),
+                children: types.chars ? characterElementsForCurrentWord : WORD
+            });
+            set(wordElement, {
+                isWord: true,
+                isWordStart: true,
+                isWordEnd: true
+            });
+            splitText.appendChild(wordElement);
+        } else // -> If NOT splitting into words OR lines...
+        //    Append the characters elements directly to splitText.
+        characterElementsForCurrentWord.forEach(function(characterElement) {
+            splitText.appendChild(characterElement);
+        });
+        if (idx < arr.length - 1) // Add a space after the word.
+        splitText.append(' ');
+         // If not splitting text into words, we return an empty array
+        return types.words ? result.concat(wordElement) : result;
+    }, []); // END LOOP;
+    // Add a trailing white space to maintain word spacing
+    if (/\s$/.test(VALUE)) splitText.append(' ');
+    textNode.replaceWith(splitText);
+    return {
+        words: words,
+        chars: chars
+    };
+}
+/**
+ * Splits the text content of a target element into words and/or characters.
+ * The function is recursive, it will also split the text content of any child
+ * elements into words/characters, while preserving the nested elements.
+ *
+ * @param {Node} node an HTML Element or Text Node
+ * @param {Object} setting splitType settings
+ */ function split(node, settings) {
+    var type = node.nodeType; // Arrays of split words and characters
+    var wordsAndChars = {
+        words: [],
+        chars: []
+    }; // Only proceed if `node` is an `Element`, `Fragment`, or `Text`
+    if (!/(1|3|11)/.test(type)) return wordsAndChars;
+     // A) IF `node` is TextNode that contains characters other than white space...
+    //    Split the text content of the node into words and/or characters
+    //    return an object containing the split word and character elements
+    if (type === 3 && /\S/.test(node.nodeValue)) return splitWordsAndChars(node, settings);
+     // B) ELSE `node` is an 'Element'
+    //    Iterate through its child nodes, calling the `split` function
+    //    recursively for each child node.
+    var childNodes = toArray(node.childNodes);
+    if (childNodes.length) {
+        set(node, 'isSplit', true); // we need to set a few styles on nested html elements
+        if (!get(node).isRoot) {
+            node.style.display = 'inline-block';
+            node.style.position = 'relative'; // To maintain original spacing around nested elements when we are
+            // splitting text into lines, we need to check if the element should
+            // have a space before and after, and store that value for later.
+            // Note: this was necessary to maintain the correct spacing when nested
+            // elements do not align with word boundaries. For example, a nested
+            // element only wraps part of a word.
+            var nextSibling = node.nextSibling;
+            var prevSibling = node.previousSibling;
+            var text = node.textContent || '';
+            var textAfter = nextSibling ? nextSibling.textContent : ' ';
+            var textBefore = prevSibling ? prevSibling.textContent : ' ';
+            set(node, {
+                isWordEnd: /\s$/.test(text) || /^\s/.test(textAfter),
+                isWordStart: /^\s/.test(text) || /\s$/.test(textBefore)
+            });
+        }
+    } // Iterate through child nodes, calling `split` recursively
+    // Returns an object containing all split words and chars
+    return childNodes.reduce(function(result, child) {
+        var _split = split(child, settings), words = _split.words, chars = _split.chars;
+        return {
+            words: [].concat(_toConsumableArray(result.words), _toConsumableArray(words)),
+            chars: [].concat(_toConsumableArray(result.chars), _toConsumableArray(chars))
+        };
+    }, wordsAndChars);
+}
+/**
+ * Gets the height and position of an element relative to offset parent.
+ * Should be equivalent to offsetTop and offsetHeight, but with sub-pixel
+ * precision.
+ *
+ * TODO needs work
+ */ function getPosition(node, isWord, settings, scrollPos) {
+    if (!settings.absolute) return {
+        top: isWord ? node.offsetTop : null
+    };
+    var parent = node.offsetParent;
+    var _scrollPos = _slicedToArray(scrollPos, 2), scrollX = _scrollPos[0], scrollY = _scrollPos[1];
+    var parentX = 0;
+    var parentY = 0;
+    if (parent && parent !== document.body) {
+        var parentRect = parent.getBoundingClientRect();
+        parentX = parentRect.x + scrollX;
+        parentY = parentRect.y + scrollY;
+    }
+    var _node$getBoundingClie = node.getBoundingClientRect(), width = _node$getBoundingClie.width, height = _node$getBoundingClie.height, x = _node$getBoundingClie.x, y = _node$getBoundingClie.y;
+    var top = y + scrollY - parentY;
+    var left = x + scrollX - parentX;
+    return {
+        width: width,
+        height: height,
+        top: top,
+        left: left
+    };
+}
+/**
+ * Recursively "un-splits" text into words.
+ * This is used when splitting text into lines but not words.
+ * We initially split the text into words so we can maintain the correct line
+ * breaks. Once text has been split into lines, we "un-split" the words...
+ * @param {Element}
+ * @return {void}
+ */ function unSplitWords(element) {
+    if (!get(element).isWord) toArray(element.children).forEach(function(child) {
+        return unSplitWords(child);
+    });
+    else {
+        remove(element);
+        element.replaceWith.apply(element, _toConsumableArray(element.childNodes));
+    }
+}
+var createFragment = function createFragment() {
+    return document.createDocumentFragment();
+};
+function repositionAfterSplit(element, settings, scrollPos) {
+    var types = parseTypes(settings.types);
+    var TAG_NAME = settings.tagName;
+    var nodes = element.getElementsByTagName('*');
+    var wordsInEachLine = [];
+    var wordsInCurrentLine = [];
+    var lineOffsetY = null;
+    var elementHeight;
+    var elementWidth;
+    var contentBox;
+    var lines = [];
+    /**------------------------------------------------
+   ** GET STYLES AND POSITIONS
+   **-----------------------------------------------*/ // There is no built-in way to detect natural line breaks in text (when a
+    // block of text wraps to fit its container). To split text into lines, we
+    // have to detect line breaks by checking the top offset of words. This is
+    // why text was split into words first. To apply absolute
+    // positioning, its also necessary to record the size and position of every
+    // split node (lines, words, characters).
+    // To consolidate DOM getting/settings, this is all done at the same time,
+    // before actually splitting text into lines, which involves restructuring
+    // the DOM again.
+    // Cache the element's parent and next sibling (for DOM removal).
+    var parent = element.parentElement;
+    var nextSibling = element.nextElementSibling; // a wrapper for the new HTML structure
+    var splitText = createFragment(); // get the computed style object for the element
+    var cs = window.getComputedStyle(element);
+    var align = cs.textAlign;
+    var fontSize = parseFloat(cs.fontSize);
+    var lineThreshold = fontSize * 0.2; // IF using absolute position...
+    if (settings.absolute) {
+        // Let contentBox be an object containing the width and offset position of
+        // the element's content box (the area inside padding box). This is needed
+        // (for absolute positioning) to set the width and position of line
+        // elements, which have not been created yet.
+        contentBox = {
+            left: element.offsetLeft,
+            top: element.offsetTop,
+            width: element.offsetWidth
+        }; // Let elementWidth and elementHeight be the actual width/height of the
+        // element. Also check if the element has inline height or width styles
+        // already set. If it does, cache those values for later.
+        elementWidth = element.offsetWidth;
+        elementHeight = element.offsetHeight; // Store the original inline height and width of the element
+        set(element, {
+            cssWidth: element.style.width,
+            cssHeight: element.style.height
+        });
+    } // Iterate over every node in the target element
+    toArray(nodes).forEach(function(node) {
+        // node is a word element or custom html element
+        var isWordLike = node.parentElement === element; // TODO needs work
+        // Get te size and position of split text nodes
+        var _getPosition = getPosition(node, isWordLike, settings, scrollPos), width = _getPosition.width, height = _getPosition.height, top = _getPosition.top, left = _getPosition.left; // If element is a `<br>` tag return here
+        if (/^br$/i.test(node.nodeName)) return;
+        if (types.lines && isWordLike) {
+            // We compare the top offset of the current word to the top offset of
+            // previous words on the current line. If the difference is greater than
+            // our defined threshold (20%), we assume this word is on a new line.
+            if (lineOffsetY === null || top - lineOffsetY >= lineThreshold) {
+                lineOffsetY = top;
+                wordsInEachLine.push(wordsInCurrentLine = []);
+            } // Add the current word node to the line array
+            wordsInCurrentLine.push(node);
+        } // END IF
+        if (settings.absolute) // Store the size and position split text nodes
+        set(node, {
+            top: top,
+            left: left,
+            width: width,
+            height: height
+        });
+    }); // END LOOP
+    // Remove the element from the DOM
+    if (parent) parent.removeChild(element);
+    /**------------------------------------------------
+   ** SPLIT LINES
+   **-----------------------------------------------*/ if (types.lines) {
+        // Iterate over lines of text (see 11 b)
+        // Let `line` be the array of words in the current line.
+        // Return an array of the wrapped line elements (lineElements)
+        lines = wordsInEachLine.map(function(wordsInThisLine) {
+            // Create an element to wrap the current line.
+            var lineElement = createElement(TAG_NAME, {
+                "class": "".concat(settings.splitClass, " ").concat(settings.lineClass),
+                style: "display: block; text-align: ".concat(align, "; width: 100%;")
+            });
+            set(lineElement, 'isLine', true);
+            var lineDimensions = {
+                height: 0,
+                top: 1e4
+            }; // Append the `lineElement` to `container`
+            splitText.appendChild(lineElement); // Iterate over the word-level elements in the current line.
+            // Note: wordOrElement can either be a word node or nested element
+            wordsInThisLine.forEach(function(wordOrElement, idx, arr) {
+                var _data$get = get(wordOrElement), isWordEnd = _data$get.isWordEnd, top = _data$get.top, height = _data$get.height;
+                var next = arr[idx + 1]; // Determine line height / y-position
+                // we use the height and offsetTop of the words which we already
+                // recorded. Because custom nested elements could have their own
+                // styles, the words on a line may not all be the same height or
+                // y position. So we take the greatest height / y - offset of the
+                // words on this line.
+                lineDimensions.height = Math.max(lineDimensions.height, height);
+                lineDimensions.top = Math.min(lineDimensions.top, top); // append the current word/element
+                lineElement.appendChild(wordOrElement); // Determine if there should space after the current element...
+                // If this is not the last word on the current line.
+                // TODO - logic for handing spacing can be improved
+                if (isWordEnd && get(next).isWordStart) lineElement.append(' ');
+            }); // END LOOP
+            if (settings.absolute) set(lineElement, {
+                height: lineDimensions.height,
+                top: lineDimensions.top
+            });
+            return lineElement;
+        }); // END LOOP
+        if (!types.words) unSplitWords(splitText);
+         // 10. Insert the new container
+        element.replaceChildren(splitText);
+    }
+    /**------------------------------------------------
+   **  SET ABSOLUTE POSITION
+   **-----------------------------------------------*/ // Apply absolute positioning to all child elements of the target element.
+    // This includes split lines, words, chars, and custom HTML elements that were
+    // included by the user. The size and position of child elements has already
+    // been recorded before splitting text into lines.
+    if (settings.absolute) {
+        // Set the width/height of the parent element so it does not collapse
+        // when its children are set to absolute position.
+        element.style.width = "".concat(element.style.width || elementWidth, "px");
+        element.style.height = "".concat(elementHeight, "px"); // Iterate over all child elements
+        toArray(nodes).forEach(function(node) {
+            var _data$get2 = get(node), isLine = _data$get2.isLine, top = _data$get2.top, left = _data$get2.left, width = _data$get2.width, height = _data$get2.height;
+            var parentData = get(node.parentElement);
+            var isChildOfLineNode = !isLine && parentData.isLine; // Set the top position of the current node.
+            // -> If `node` a line element, we use the top offset of its first child
+            // -> If `node` the child of line element, then its top offset is zero
+            node.style.top = "".concat(isChildOfLineNode ? top - parentData.top : top, "px"); // Set the left position of the current node.
+            // -> IF `node` is a line element, this is equal to the position left of
+            //    the content box of the parent element
+            // -> IF `node` is the child of a line element, the value has to adjusted
+            //    so its relative to the line element
+            node.style.left = isLine ? "".concat(contentBox.left, "px") : "".concat(left - (isChildOfLineNode ? contentBox.left : 0), "px"); // Set the height of the current node to the cached value.
+            node.style.height = "".concat(height, "px"); //  Set the width of the current node.
+            //  If its a line element, width is equal to the width of the contentBox.
+            node.style.width = isLine ? "".concat(contentBox.width, "px") : "".concat(width, "px"); // Finally, set the node's position to absolute.
+            node.style.position = 'absolute';
+        });
+    } // end if;
+    // 14. Re-attach the element to the DOM
+    if (parent) {
+        if (nextSibling) parent.insertBefore(element, nextSibling);
+        else parent.appendChild(element);
+    }
+    return lines;
+}
+var _defaults = extend(defaults, {});
+var SplitType = /*#__PURE__*/ function() {
+    _createClass(SplitType, null, [
+        {
+            key: "clearData",
+            /**
+     * CLears all data
+     */ value: function clearData() {
+                clear();
+            }
+        },
+        {
+            key: "setDefaults",
+            /**
+     * Sets the default settings for all SplitType instances.
+     * The provided object will be merged with the existing defaults objects.
+     *
+     * @param {Object} settings an object containing the settings to override
+     * @returns {Object} the new default settings
+     * @public
+     * @static
+     * @example
+     * SplitType.setDefaults({ "position": "absolute" })
+     */ value: function setDefaults(options) {
+                _defaults = extend(_defaults, parseSettings(options));
+                return defaults;
+            }
+        },
+        {
+            key: "revert",
+            value: function revert(elements) {
+                getTargetElements(elements).forEach(function(element) {
+                    var _data$get = get(element), isSplit = _data$get.isSplit, html = _data$get.html, cssWidth = _data$get.cssWidth, cssHeight = _data$get.cssHeight;
+                    if (isSplit) {
+                        element.innerHTML = html;
+                        element.style.width = cssWidth || '';
+                        element.style.height = cssHeight || '';
+                        remove(element);
+                    }
+                });
+            }
+        },
+        {
+            key: "create",
+            value: function create(target, options) {
+                return new SplitType(target, options);
+            }
+        },
+        {
+            key: "data",
+            /**
+     * The internal data store
+     */ get: function get() {
+                return cache;
+            }
+        },
+        {
+            key: "defaults",
+            get: function get() {
+                return _defaults;
+            },
+            set: function set(options) {
+                _defaults = extend(_defaults, parseSettings(options));
+            }
+        }
+    ]);
+    function SplitType(elements, options) {
+        _classCallCheck(this, SplitType);
+        this.isSplit = false;
+        this.settings = extend(_defaults, parseSettings(options));
+        this.elements = getTargetElements(elements); // Start the split process
+        this.split();
+    }
+    /**
+   * Splits the text in all target elements. This method is called
+   * automatically when a new SplitType instance is created. It can also be
+   * called manually to re-split text with new options.
+   * @param {Object} options
+   * @public
+   */ _createClass(SplitType, [
+        {
+            key: "split",
+            value: function split$1(options) {
+                var _this = this;
+                // Revert target elements (if they are already split)
+                // Note: revert was already called once in the constructor. However, we
+                // need to call it again here so text is reverted when the user manually
+                // calls the `split` method to re-split text.
+                this.revert(); // Store the original html content of each target element
+                this.elements.forEach(function(element) {
+                    set(element, 'html', element.innerHTML);
+                }); // Create arrays to hold the split lines, words, and characters
+                this.lines = [];
+                this.words = [];
+                this.chars = []; // cache vertical scroll position before splitting
+                var scrollPos = [
+                    window.pageXOffset,
+                    window.pageYOffset
+                ]; // If new options were passed into the `split()` method, update settings
+                if (options !== undefined) this.settings = extend(this.settings, parseSettings(options));
+                var types = parseTypes(this.settings.types); // If the `types` option is set to an empty array, text will not be split.
+                // @example new SplitType('#target', { types: [] })
+                if (types.none) return;
+                 // Split text in each target element
+                this.elements.forEach(function(element) {
+                    // Add the split text nodes from this element to the arrays of all split
+                    // text nodes for this instance.
+                    set(element, 'isRoot', true);
+                    var _split2 = split(element, _this.settings), words = _split2.words, chars = _split2.chars;
+                    _this.words = [].concat(_toConsumableArray(_this.words), _toConsumableArray(words));
+                    _this.chars = [].concat(_toConsumableArray(_this.chars), _toConsumableArray(chars));
+                });
+                this.elements.forEach(function(element) {
+                    if (types.lines || _this.settings.absolute) {
+                        var lines = repositionAfterSplit(element, _this.settings, scrollPos);
+                        _this.lines = [].concat(_toConsumableArray(_this.lines), _toConsumableArray(lines));
+                    }
+                }); // Set isSplit to true for the SplitType instance
+                this.isSplit = true; // Set scroll position to cached value.
+                window.scrollTo(scrollPos[0], scrollPos[1]); // Clean up stored data
+                cleanup();
+            }
+        },
+        {
+            key: "revert",
+            value: function revert() {
+                if (this.isSplit) {
+                    // Reset instance properties if necessary
+                    this.lines = null;
+                    this.words = null;
+                    this.chars = null;
+                    this.isSplit = false;
+                }
+                SplitType.revert(this.elements);
+            }
+        }
+    ]);
+    return SplitType;
+}();
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5dJnk":[function(require,module,exports,__globalThis) {
+// Defines a debounce function to limit the rate at which a function can fire.
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "debounce", ()=>debounce);
+const debounce = (func, delay)=>{
+    let timerId; // Holds a reference to the timeout between calls.
+    return (...args)=>{
+        clearTimeout(timerId); // Clears the current timeout, if any, to reset the debounce timer.
+        timerId = setTimeout(()=>{
+            func.apply(undefined, args); // Calls the passed function after the specified delay with the correct context and arguments.
+        }, delay);
+    };
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"6r5Mq":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// Defines a class to create scroll-triggered animation effects on text.
+parcelHelpers.export(exports, "TextRevealEffect", ()=>TextRevealEffect);
+var _textSplitter = require("../utils/text-splitter");
+var _gsap = require("gsap");
+var _gsapDefault = parcelHelpers.interopDefault(_gsap);
+class TextRevealEffect {
+    constructor(textElement, splitType = "chars"){
+        // Check if the provided element is valid.
+        if (!textElement || !(textElement instanceof HTMLElement)) throw new Error("Invalid text element provided.");
+        this.textElement = textElement;
+        this.splitType = splitType;
+        // Set up the effect for the provided text element.
+        this.initializeEffect();
+    }
+    // Sets up the initial text effect on the provided element.
+    initializeEffect() {
+        // Callback to re-trigger animations on resize.
+        const textResizeCallback = ()=>this.scroll();
+        // Split text for animation and store the reference.
+        this.splitter = new (0, _textSplitter.TextSplitter)(this.textElement, {
+            resizeCallback: textResizeCallback,
+            splitTypeTypes: this.splitType
+        });
+        // Trigger the initial scroll effect.
+        this.scroll();
+    }
+    // Animates text based on the scroll position.
+    scroll() {
+        let elements;
+        if (this.splitType === "chars") elements = this.splitter.getChars();
+        else if (this.splitType === "words") elements = this.splitter.getWords();
+        else elements = this.splitter.getLines();
+        (0, _gsapDefault.default).fromTo(elements, {
+            y: "150px",
+            opacity: 0
+        }, {
+            y: 0,
+            opacity: 1,
+            ease: "power3.in",
+            stagger: 0.1,
+            duration: 0.8,
+            scrollTrigger: {
+                trigger: this.textElement,
+                start: "top bottom-=0%",
+                end: "bottom center+=15%",
+                scrub: true
+            }
+        });
+    }
+}
+
+},{"../utils/text-splitter":"eXT0Z","gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"lzAgJ":[function(require,module,exports,__globalThis) {
+(function(global, factory) {
+    factory(exports);
+})(this, function(exports1) {
+    'use strict';
+    var _doc, _win, _docElement, _body, _divContainer, _svgContainer, _identityMatrix, _gEl, _transformProp = "transform", _transformOriginProp = _transformProp + "Origin", _hasOffsetBug, _setDoc = function _setDoc(element) {
+        var doc = element.ownerDocument || element;
+        if (!(_transformProp in element.style) && "msTransform" in element.style) {
+            _transformProp = "msTransform";
+            _transformOriginProp = _transformProp + "Origin";
+        }
+        while(doc.parentNode && (doc = doc.parentNode));
+        _win = window;
+        _identityMatrix = new Matrix2D();
+        if (doc) {
+            _doc = doc;
+            _docElement = doc.documentElement;
+            _body = doc.body;
+            _gEl = _doc.createElementNS("http://www.w3.org/2000/svg", "g");
+            _gEl.style.transform = "none";
+            var d1 = doc.createElement("div"), d2 = doc.createElement("div"), root = doc && (doc.body || doc.firstElementChild);
+            if (root && root.appendChild) {
+                root.appendChild(d1);
+                d1.appendChild(d2);
+                d1.setAttribute("style", "position:static;transform:translate3d(0,0,1px)");
+                _hasOffsetBug = d2.offsetParent !== d1;
+                root.removeChild(d1);
+            }
+        }
+        return doc;
+    }, _forceNonZeroScale = function _forceNonZeroScale(e) {
+        var a, cache;
+        while(e && e !== _body){
+            cache = e._gsap;
+            cache && cache.uncache && cache.get(e, "x");
+            if (cache && !cache.scaleX && !cache.scaleY && cache.renderTransform) {
+                cache.scaleX = cache.scaleY = 1e-4;
+                cache.renderTransform(1, cache);
+                a ? a.push(cache) : a = [
+                    cache
+                ];
+            }
+            e = e.parentNode;
+        }
+        return a;
+    }, _svgTemps = [], _divTemps = [], _getDocScrollTop = function _getDocScrollTop() {
+        return _win.pageYOffset || _doc.scrollTop || _docElement.scrollTop || _body.scrollTop || 0;
+    }, _getDocScrollLeft = function _getDocScrollLeft() {
+        return _win.pageXOffset || _doc.scrollLeft || _docElement.scrollLeft || _body.scrollLeft || 0;
+    }, _svgOwner = function _svgOwner(element) {
+        return element.ownerSVGElement || ((element.tagName + "").toLowerCase() === "svg" ? element : null);
+    }, _isFixed = function _isFixed(element) {
+        if (_win.getComputedStyle(element).position === "fixed") return true;
+        element = element.parentNode;
+        if (element && element.nodeType === 1) return _isFixed(element);
+    }, _createSibling = function _createSibling(element, i) {
+        if (element.parentNode && (_doc || _setDoc(element))) {
+            var svg = _svgOwner(element), ns = svg ? svg.getAttribute("xmlns") || "http://www.w3.org/2000/svg" : "http://www.w3.org/1999/xhtml", type = svg ? i ? "rect" : "g" : "div", x = i !== 2 ? 0 : 100, y = i === 3 ? 100 : 0, css = "position:absolute;display:block;pointer-events:none;margin:0;padding:0;", e = _doc.createElementNS ? _doc.createElementNS(ns.replace(/^https/, "http"), type) : _doc.createElement(type);
+            if (i) {
+                if (!svg) {
+                    if (!_divContainer) {
+                        _divContainer = _createSibling(element);
+                        _divContainer.style.cssText = css;
+                    }
+                    e.style.cssText = css + "width:0.1px;height:0.1px;top:" + y + "px;left:" + x + "px";
+                    _divContainer.appendChild(e);
+                } else {
+                    _svgContainer || (_svgContainer = _createSibling(element));
+                    e.setAttribute("width", 0.01);
+                    e.setAttribute("height", 0.01);
+                    e.setAttribute("transform", "translate(" + x + "," + y + ")");
+                    _svgContainer.appendChild(e);
+                }
+            }
+            return e;
+        }
+        throw "Need document and parent.";
+    }, _consolidate = function _consolidate(m) {
+        var c = new Matrix2D(), i = 0;
+        for(; i < m.numberOfItems; i++)c.multiply(m.getItem(i).matrix);
+        return c;
+    }, _getCTM = function _getCTM(svg) {
+        var m = svg.getCTM(), transform;
+        if (!m) {
+            transform = svg.style[_transformProp];
+            svg.style[_transformProp] = "none";
+            svg.appendChild(_gEl);
+            m = _gEl.getCTM();
+            svg.removeChild(_gEl);
+            transform ? svg.style[_transformProp] = transform : svg.style.removeProperty(_transformProp.replace(/([A-Z])/g, "-$1").toLowerCase());
+        }
+        return m || _identityMatrix.clone();
+    }, _placeSiblings = function _placeSiblings(element, adjustGOffset) {
+        var svg = _svgOwner(element), isRootSVG = element === svg, siblings = svg ? _svgTemps : _divTemps, parent = element.parentNode, container, m, b, x, y, cs;
+        if (element === _win) return element;
+        siblings.length || siblings.push(_createSibling(element, 1), _createSibling(element, 2), _createSibling(element, 3));
+        container = svg ? _svgContainer : _divContainer;
+        if (svg) {
+            if (isRootSVG) {
+                b = _getCTM(element);
+                x = -b.e / b.a;
+                y = -b.f / b.d;
+                m = _identityMatrix;
+            } else if (element.getBBox) {
+                b = element.getBBox();
+                m = element.transform ? element.transform.baseVal : {};
+                m = !m.numberOfItems ? _identityMatrix : m.numberOfItems > 1 ? _consolidate(m) : m.getItem(0).matrix;
+                x = m.a * b.x + m.c * b.y;
+                y = m.b * b.x + m.d * b.y;
+            } else {
+                m = new Matrix2D();
+                x = y = 0;
+            }
+            if (adjustGOffset && element.tagName.toLowerCase() === "g") x = y = 0;
+            (isRootSVG ? svg : parent).appendChild(container);
+            container.setAttribute("transform", "matrix(" + m.a + "," + m.b + "," + m.c + "," + m.d + "," + (m.e + x) + "," + (m.f + y) + ")");
+        } else {
+            x = y = 0;
+            if (_hasOffsetBug) {
+                m = element.offsetParent;
+                b = element;
+                while(b && (b = b.parentNode) && b !== m && b.parentNode)if ((_win.getComputedStyle(b)[_transformProp] + "").length > 4) {
+                    x = b.offsetLeft;
+                    y = b.offsetTop;
+                    b = 0;
+                }
+            }
+            cs = _win.getComputedStyle(element);
+            if (cs.position !== "absolute" && cs.position !== "fixed") {
+                m = element.offsetParent;
+                while(parent && parent !== m){
+                    x += parent.scrollLeft || 0;
+                    y += parent.scrollTop || 0;
+                    parent = parent.parentNode;
+                }
+            }
+            b = container.style;
+            b.top = element.offsetTop - y + "px";
+            b.left = element.offsetLeft - x + "px";
+            b[_transformProp] = cs[_transformProp];
+            b[_transformOriginProp] = cs[_transformOriginProp];
+            b.position = cs.position === "fixed" ? "fixed" : "absolute";
+            element.parentNode.appendChild(container);
+        }
+        return container;
+    }, _setMatrix = function _setMatrix(m, a, b, c, d, e, f) {
+        m.a = a;
+        m.b = b;
+        m.c = c;
+        m.d = d;
+        m.e = e;
+        m.f = f;
+        return m;
+    };
+    var Matrix2D = function() {
+        function Matrix2D(a, b, c, d, e, f) {
+            if (a === void 0) a = 1;
+            if (b === void 0) b = 0;
+            if (c === void 0) c = 0;
+            if (d === void 0) d = 1;
+            if (e === void 0) e = 0;
+            if (f === void 0) f = 0;
+            _setMatrix(this, a, b, c, d, e, f);
+        }
+        var _proto = Matrix2D.prototype;
+        _proto.inverse = function inverse() {
+            var a = this.a, b = this.b, c = this.c, d = this.d, e = this.e, f = this.f, determinant = a * d - b * c || 1e-10;
+            return _setMatrix(this, d / determinant, -b / determinant, -c / determinant, a / determinant, (c * f - d * e) / determinant, -(a * f - b * e) / determinant);
+        };
+        _proto.multiply = function multiply(matrix) {
+            var a = this.a, b = this.b, c = this.c, d = this.d, e = this.e, f = this.f, a2 = matrix.a, b2 = matrix.c, c2 = matrix.b, d2 = matrix.d, e2 = matrix.e, f2 = matrix.f;
+            return _setMatrix(this, a2 * a + c2 * c, a2 * b + c2 * d, b2 * a + d2 * c, b2 * b + d2 * d, e + e2 * a + f2 * c, f + e2 * b + f2 * d);
+        };
+        _proto.clone = function clone() {
+            return new Matrix2D(this.a, this.b, this.c, this.d, this.e, this.f);
+        };
+        _proto.equals = function equals(matrix) {
+            var a = this.a, b = this.b, c = this.c, d = this.d, e = this.e, f = this.f;
+            return a === matrix.a && b === matrix.b && c === matrix.c && d === matrix.d && e === matrix.e && f === matrix.f;
+        };
+        _proto.apply = function apply(point, decoratee) {
+            if (decoratee === void 0) decoratee = {};
+            var x = point.x, y = point.y, a = this.a, b = this.b, c = this.c, d = this.d, e = this.e, f = this.f;
+            decoratee.x = x * a + y * c + e || 0;
+            decoratee.y = x * b + y * d + f || 0;
+            return decoratee;
+        };
+        return Matrix2D;
+    }();
+    function getGlobalMatrix(element, inverse, adjustGOffset, includeScrollInFixed) {
+        if (!element || !element.parentNode || (_doc || _setDoc(element)).documentElement === element) return new Matrix2D();
+        var zeroScales = _forceNonZeroScale(element), svg = _svgOwner(element), temps = svg ? _svgTemps : _divTemps, container = _placeSiblings(element, adjustGOffset), b1 = temps[0].getBoundingClientRect(), b2 = temps[1].getBoundingClientRect(), b3 = temps[2].getBoundingClientRect(), parent = container.parentNode, isFixed = !includeScrollInFixed && _isFixed(element), m = new Matrix2D((b2.left - b1.left) / 100, (b2.top - b1.top) / 100, (b3.left - b1.left) / 100, (b3.top - b1.top) / 100, b1.left + (isFixed ? 0 : _getDocScrollLeft()), b1.top + (isFixed ? 0 : _getDocScrollTop()));
+        parent.removeChild(container);
+        if (zeroScales) {
+            b1 = zeroScales.length;
+            while(b1--){
+                b2 = zeroScales[b1];
+                b2.scaleX = b2.scaleY = 0;
+                b2.renderTransform(1, b2);
+            }
+        }
+        return inverse ? m.inverse() : m;
+    }
+    /*!
+	 * Flip 3.12.5
+	 * https://gsap.com
+	 *
+	 * @license Copyright 2008-2024, GreenSock. All rights reserved.
+	 * Subject to the terms at https://gsap.com/standard-license or for
+	 * Club GSAP members, the agreement issued with that membership.
+	 * @author: Jack Doyle, jack@greensock.com
+	*/ var _id = 1, _toArray, gsap, _batch, _batchAction, _body$1, _closestTenth, _getStyleSaver, _forEachBatch = function _forEachBatch(batch, name) {
+        return batch.actions.forEach(function(a) {
+            return a.vars[name] && a.vars[name](a);
+        });
+    }, _batchLookup = {}, _RAD2DEG = 180 / Math.PI, _DEG2RAD = Math.PI / 180, _emptyObj = {}, _dashedNameLookup = {}, _memoizedRemoveProps = {}, _listToArray = function _listToArray(list) {
+        return typeof list === "string" ? list.split(" ").join("").split(",") : list;
+    }, _callbacks = _listToArray("onStart,onUpdate,onComplete,onReverseComplete,onInterrupt"), _removeProps = _listToArray("transform,transformOrigin,width,height,position,top,left,opacity,zIndex,maxWidth,maxHeight,minWidth,minHeight"), _getEl = function _getEl(target) {
+        return _toArray(target)[0] || console.warn("Element not found:", target);
+    }, _round = function _round(value) {
+        return Math.round(value * 10000) / 10000 || 0;
+    }, _toggleClass = function _toggleClass(targets, className, action) {
+        return targets.forEach(function(el) {
+            return el.classList[action](className);
+        });
+    }, _reserved = {
+        zIndex: 1,
+        kill: 1,
+        simple: 1,
+        spin: 1,
+        clearProps: 1,
+        targets: 1,
+        toggleClass: 1,
+        onComplete: 1,
+        onUpdate: 1,
+        onInterrupt: 1,
+        onStart: 1,
+        delay: 1,
+        repeat: 1,
+        repeatDelay: 1,
+        yoyo: 1,
+        scale: 1,
+        fade: 1,
+        absolute: 1,
+        props: 1,
+        onEnter: 1,
+        onLeave: 1,
+        custom: 1,
+        paused: 1,
+        nested: 1,
+        prune: 1,
+        absoluteOnLeave: 1
+    }, _fitReserved = {
+        zIndex: 1,
+        simple: 1,
+        clearProps: 1,
+        scale: 1,
+        absolute: 1,
+        fitChild: 1,
+        getVars: 1,
+        props: 1
+    }, _camelToDashed = function _camelToDashed(p) {
+        return p.replace(/([A-Z])/g, "-$1").toLowerCase();
+    }, _copy = function _copy(obj, exclude) {
+        var result = {}, p;
+        for(p in obj)exclude[p] || (result[p] = obj[p]);
+        return result;
+    }, _memoizedProps = {}, _memoizeProps = function _memoizeProps(props) {
+        var p = _memoizedProps[props] = _listToArray(props);
+        _memoizedRemoveProps[props] = p.concat(_removeProps);
+        return p;
+    }, _getInverseGlobalMatrix = function _getInverseGlobalMatrix(el) {
+        var cache = el._gsap || gsap.core.getCache(el);
+        if (cache.gmCache === gsap.ticker.frame) return cache.gMatrix;
+        cache.gmCache = gsap.ticker.frame;
+        return cache.gMatrix = getGlobalMatrix(el, true, false, true);
+    }, _getDOMDepth = function _getDOMDepth(el, invert, level) {
+        if (level === void 0) level = 0;
+        var parent = el.parentNode, inc = 1000 * Math.pow(10, level) * (invert ? -1 : 1), l = invert ? -inc * 900 : 0;
+        while(el){
+            l += inc;
+            el = el.previousSibling;
+        }
+        return parent ? l + _getDOMDepth(parent, invert, level + 1) : l;
+    }, _orderByDOMDepth = function _orderByDOMDepth(comps, invert, isElStates) {
+        comps.forEach(function(comp) {
+            return comp.d = _getDOMDepth(isElStates ? comp.element : comp.t, invert);
+        });
+        comps.sort(function(c1, c2) {
+            return c1.d - c2.d;
+        });
+        return comps;
+    }, _recordInlineStyles = function _recordInlineStyles(elState, props) {
+        var style = elState.element.style, a = elState.css = elState.css || [], i = props.length, p, v;
+        while(i--){
+            p = props[i];
+            v = style[p] || style.getPropertyValue(p);
+            a.push(v ? p : _dashedNameLookup[p] || (_dashedNameLookup[p] = _camelToDashed(p)), v);
+        }
+        return style;
+    }, _applyInlineStyles = function _applyInlineStyles(state) {
+        var css = state.css, style = state.element.style, i = 0;
+        state.cache.uncache = 1;
+        for(; i < css.length; i += 2)css[i + 1] ? style[css[i]] = css[i + 1] : style.removeProperty(css[i]);
+        if (!css[css.indexOf("transform") + 1] && style.translate) {
+            style.removeProperty("translate");
+            style.removeProperty("scale");
+            style.removeProperty("rotate");
+        }
+    }, _setFinalStates = function _setFinalStates(comps, onlyTransforms) {
+        comps.forEach(function(c) {
+            return c.a.cache.uncache = 1;
+        });
+        onlyTransforms || comps.finalStates.forEach(_applyInlineStyles);
+    }, _absoluteProps = "paddingTop,paddingRight,paddingBottom,paddingLeft,gridArea,transition".split(","), _makeAbsolute = function _makeAbsolute(elState, fallbackNode, ignoreBatch) {
+        var element = elState.element, width = elState.width, height = elState.height, uncache = elState.uncache, getProp = elState.getProp, style = element.style, i = 4, result, displayIsNone, cs;
+        typeof fallbackNode !== "object" && (fallbackNode = elState);
+        if (_batch && ignoreBatch !== 1) {
+            _batch._abs.push({
+                t: element,
+                b: elState,
+                a: elState,
+                sd: 0
+            });
+            _batch._final.push(function() {
+                return elState.cache.uncache = 1, _applyInlineStyles(elState);
+            });
+            return element;
+        }
+        displayIsNone = getProp("display") === "none";
+        if (!elState.isVisible || displayIsNone) {
+            displayIsNone && (_recordInlineStyles(elState, [
+                "display"
+            ]).display = fallbackNode.display);
+            elState.matrix = fallbackNode.matrix;
+            elState.width = width = elState.width || fallbackNode.width;
+            elState.height = height = elState.height || fallbackNode.height;
+        }
+        _recordInlineStyles(elState, _absoluteProps);
+        cs = window.getComputedStyle(element);
+        while(i--)style[_absoluteProps[i]] = cs[_absoluteProps[i]];
+        style.gridArea = "1 / 1 / 1 / 1";
+        style.transition = "none";
+        style.position = "absolute";
+        style.width = width + "px";
+        style.height = height + "px";
+        style.top || (style.top = "0px");
+        style.left || (style.left = "0px");
+        if (uncache) result = new ElementState(element);
+        else {
+            result = _copy(elState, _emptyObj);
+            result.position = "absolute";
+            if (elState.simple) {
+                var bounds = element.getBoundingClientRect();
+                result.matrix = new Matrix2D(1, 0, 0, 1, bounds.left + _getDocScrollLeft(), bounds.top + _getDocScrollTop());
+            } else result.matrix = getGlobalMatrix(element, false, false, true);
+        }
+        result = _fit(result, elState, true);
+        elState.x = _closestTenth(result.x, 0.01);
+        elState.y = _closestTenth(result.y, 0.01);
+        return element;
+    }, _filterComps = function _filterComps(comps, targets) {
+        if (targets !== true) {
+            targets = _toArray(targets);
+            comps = comps.filter(function(c) {
+                if (targets.indexOf((c.sd < 0 ? c.b : c.a).element) !== -1) return true;
+                else {
+                    c.t._gsap.renderTransform(1);
+                    if (c.b.isVisible) {
+                        c.t.style.width = c.b.width + "px";
+                        c.t.style.height = c.b.height + "px";
+                    }
+                }
+            });
+        }
+        return comps;
+    }, _makeCompsAbsolute = function _makeCompsAbsolute(comps) {
+        return _orderByDOMDepth(comps, true).forEach(function(c) {
+            return (c.a.isVisible || c.b.isVisible) && _makeAbsolute(c.sd < 0 ? c.b : c.a, c.b, 1);
+        });
+    }, _findElStateInState = function _findElStateInState(state, other) {
+        return other && state.idLookup[_parseElementState(other).id] || state.elementStates[0];
+    }, _parseElementState = function _parseElementState(elOrNode, props, simple, other) {
+        return elOrNode instanceof ElementState ? elOrNode : elOrNode instanceof FlipState ? _findElStateInState(elOrNode, other) : new ElementState(typeof elOrNode === "string" ? _getEl(elOrNode) || console.warn(elOrNode + " not found") : elOrNode, props, simple);
+    }, _recordProps = function _recordProps(elState, props) {
+        var getProp = gsap.getProperty(elState.element, null, "native"), obj = elState.props = {}, i = props.length;
+        while(i--)obj[props[i]] = (getProp(props[i]) + "").trim();
+        obj.zIndex && (obj.zIndex = parseFloat(obj.zIndex) || 0);
+        return elState;
+    }, _applyProps = function _applyProps(element, props) {
+        var style = element.style || element, p;
+        for(p in props)style[p] = props[p];
+    }, _getID = function _getID(el) {
+        var id = el.getAttribute("data-flip-id");
+        id || el.setAttribute("data-flip-id", id = "auto-" + _id++);
+        return id;
+    }, _elementsFromElementStates = function _elementsFromElementStates(elStates) {
+        return elStates.map(function(elState) {
+            return elState.element;
+        });
+    }, _handleCallback = function _handleCallback(callback, elStates, tl) {
+        return callback && elStates.length && tl.add(callback(_elementsFromElementStates(elStates), tl, new FlipState(elStates, 0, true)), 0);
+    }, _fit = function _fit(fromState, toState, scale, applyProps, fitChild, vars) {
+        var element = fromState.element, cache = fromState.cache, parent = fromState.parent, x = fromState.x, y = fromState.y, width = toState.width, height = toState.height, scaleX = toState.scaleX, scaleY = toState.scaleY, rotation = toState.rotation, bounds = toState.bounds, styles = vars && _getStyleSaver && _getStyleSaver(element, "transform"), dimensionState = fromState, _toState$matrix = toState.matrix, e = _toState$matrix.e, f = _toState$matrix.f, deep = fromState.bounds.width !== bounds.width || fromState.bounds.height !== bounds.height || fromState.scaleX !== scaleX || fromState.scaleY !== scaleY || fromState.rotation !== rotation, simple = !deep && fromState.simple && toState.simple && !fitChild, skewX, fromPoint, toPoint, getProp, parentMatrix, matrix, bbox;
+        if (simple || !parent) {
+            scaleX = scaleY = 1;
+            rotation = skewX = 0;
+        } else {
+            parentMatrix = _getInverseGlobalMatrix(parent);
+            matrix = parentMatrix.clone().multiply(toState.ctm ? toState.matrix.clone().multiply(toState.ctm) : toState.matrix);
+            rotation = _round(Math.atan2(matrix.b, matrix.a) * _RAD2DEG);
+            skewX = _round(Math.atan2(matrix.c, matrix.d) * _RAD2DEG + rotation) % 360;
+            scaleX = Math.sqrt(Math.pow(matrix.a, 2) + Math.pow(matrix.b, 2));
+            scaleY = Math.sqrt(Math.pow(matrix.c, 2) + Math.pow(matrix.d, 2)) * Math.cos(skewX * _DEG2RAD);
+            if (fitChild) {
+                fitChild = _toArray(fitChild)[0];
+                getProp = gsap.getProperty(fitChild);
+                bbox = fitChild.getBBox && typeof fitChild.getBBox === "function" && fitChild.getBBox();
+                dimensionState = {
+                    scaleX: getProp("scaleX"),
+                    scaleY: getProp("scaleY"),
+                    width: bbox ? bbox.width : Math.ceil(parseFloat(getProp("width", "px"))),
+                    height: bbox ? bbox.height : parseFloat(getProp("height", "px"))
+                };
+            }
+            cache.rotation = rotation + "deg";
+            cache.skewX = skewX + "deg";
+        }
+        if (scale) {
+            scaleX *= width === dimensionState.width || !dimensionState.width ? 1 : width / dimensionState.width;
+            scaleY *= height === dimensionState.height || !dimensionState.height ? 1 : height / dimensionState.height;
+            cache.scaleX = scaleX;
+            cache.scaleY = scaleY;
+        } else {
+            width = _closestTenth(width * scaleX / dimensionState.scaleX, 0);
+            height = _closestTenth(height * scaleY / dimensionState.scaleY, 0);
+            element.style.width = width + "px";
+            element.style.height = height + "px";
+        }
+        applyProps && _applyProps(element, toState.props);
+        if (simple || !parent) {
+            x += e - fromState.matrix.e;
+            y += f - fromState.matrix.f;
+        } else if (deep || parent !== toState.parent) {
+            cache.renderTransform(1, cache);
+            matrix = getGlobalMatrix(fitChild || element, false, false, true);
+            fromPoint = parentMatrix.apply({
+                x: matrix.e,
+                y: matrix.f
+            });
+            toPoint = parentMatrix.apply({
+                x: e,
+                y: f
+            });
+            x += toPoint.x - fromPoint.x;
+            y += toPoint.y - fromPoint.y;
+        } else {
+            parentMatrix.e = parentMatrix.f = 0;
+            toPoint = parentMatrix.apply({
+                x: e - fromState.matrix.e,
+                y: f - fromState.matrix.f
+            });
+            x += toPoint.x;
+            y += toPoint.y;
+        }
+        x = _closestTenth(x, 0.02);
+        y = _closestTenth(y, 0.02);
+        if (vars && !(vars instanceof ElementState)) styles && styles.revert();
+        else {
+            cache.x = x + "px";
+            cache.y = y + "px";
+            cache.renderTransform(1, cache);
+        }
+        if (vars) {
+            vars.x = x;
+            vars.y = y;
+            vars.rotation = rotation;
+            vars.skewX = skewX;
+            if (scale) {
+                vars.scaleX = scaleX;
+                vars.scaleY = scaleY;
+            } else {
+                vars.width = width;
+                vars.height = height;
+            }
+        }
+        return vars || cache;
+    }, _parseState = function _parseState(targetsOrState, vars) {
+        return targetsOrState instanceof FlipState ? targetsOrState : new FlipState(targetsOrState, vars);
+    }, _getChangingElState = function _getChangingElState(toState, fromState, id) {
+        var to1 = toState.idLookup[id], to2 = toState.alt[id];
+        return to2.isVisible && (!(fromState.getElementState(to2.element) || to2).isVisible || !to1.isVisible) ? to2 : to1;
+    }, _bodyMetrics = [], _bodyProps = "width,height,overflowX,overflowY".split(","), _bodyLocked, _lockBodyScroll = function _lockBodyScroll(lock) {
+        if (lock !== _bodyLocked) {
+            var s = _body$1.style, w = _body$1.clientWidth === window.outerWidth, h = _body$1.clientHeight === window.outerHeight, i = 4;
+            if (lock && (w || h)) {
+                while(i--)_bodyMetrics[i] = s[_bodyProps[i]];
+                if (w) {
+                    s.width = _body$1.clientWidth + "px";
+                    s.overflowY = "hidden";
+                }
+                if (h) {
+                    s.height = _body$1.clientHeight + "px";
+                    s.overflowX = "hidden";
+                }
+                _bodyLocked = lock;
+            } else if (_bodyLocked) {
+                while(i--)_bodyMetrics[i] ? s[_bodyProps[i]] = _bodyMetrics[i] : s.removeProperty(_camelToDashed(_bodyProps[i]));
+                _bodyLocked = lock;
+            }
+        }
+    }, _fromTo = function _fromTo(fromState, toState, vars, relative) {
+        fromState instanceof FlipState && toState instanceof FlipState || console.warn("Not a valid state object.");
+        vars = vars || {};
+        var _vars = vars, clearProps = _vars.clearProps, onEnter = _vars.onEnter, onLeave = _vars.onLeave, absolute = _vars.absolute, absoluteOnLeave = _vars.absoluteOnLeave, custom = _vars.custom, delay = _vars.delay, paused = _vars.paused, repeat = _vars.repeat, repeatDelay = _vars.repeatDelay, yoyo = _vars.yoyo, toggleClass = _vars.toggleClass, nested = _vars.nested, _zIndex = _vars.zIndex, scale = _vars.scale, fade = _vars.fade, stagger = _vars.stagger, spin = _vars.spin, prune = _vars.prune, props = ("props" in vars ? vars : fromState).props, tweenVars = _copy(vars, _reserved), animation = gsap.timeline({
+            delay: delay,
+            paused: paused,
+            repeat: repeat,
+            repeatDelay: repeatDelay,
+            yoyo: yoyo,
+            data: "isFlip"
+        }), remainingProps = tweenVars, entering = [], leaving = [], comps = [], swapOutTargets = [], spinNum = spin === true ? 1 : spin || 0, spinFunc = typeof spin === "function" ? spin : function() {
+            return spinNum;
+        }, interrupted = fromState.interrupted || toState.interrupted, addFunc = animation[relative !== 1 ? "to" : "from"], v, p, endTime, i, el, comp, state, targets, finalStates, fromNode, toNode, run, a, b;
+        for(p in toState.idLookup){
+            toNode = !toState.alt[p] ? toState.idLookup[p] : _getChangingElState(toState, fromState, p);
+            el = toNode.element;
+            fromNode = fromState.idLookup[p];
+            fromState.alt[p] && el === fromNode.element && (fromState.alt[p].isVisible || !toNode.isVisible) && (fromNode = fromState.alt[p]);
+            if (fromNode) {
+                comp = {
+                    t: el,
+                    b: fromNode,
+                    a: toNode,
+                    sd: fromNode.element === el ? 0 : toNode.isVisible ? 1 : -1
+                };
+                comps.push(comp);
+                if (comp.sd) {
+                    if (comp.sd < 0) {
+                        comp.b = toNode;
+                        comp.a = fromNode;
+                    }
+                    interrupted && _recordInlineStyles(comp.b, props ? _memoizedRemoveProps[props] : _removeProps);
+                    fade && comps.push(comp.swap = {
+                        t: fromNode.element,
+                        b: comp.b,
+                        a: comp.a,
+                        sd: -comp.sd,
+                        swap: comp
+                    });
+                }
+                el._flip = fromNode.element._flip = _batch ? _batch.timeline : animation;
+            } else if (toNode.isVisible) {
+                comps.push({
+                    t: el,
+                    b: _copy(toNode, {
+                        isVisible: 1
+                    }),
+                    a: toNode,
+                    sd: 0,
+                    entering: 1
+                });
+                el._flip = _batch ? _batch.timeline : animation;
+            }
+        }
+        props && (_memoizedProps[props] || _memoizeProps(props)).forEach(function(p) {
+            return tweenVars[p] = function(i) {
+                return comps[i].a.props[p];
+            };
+        });
+        comps.finalStates = finalStates = [];
+        run = function run() {
+            _orderByDOMDepth(comps);
+            _lockBodyScroll(true);
+            for(i = 0; i < comps.length; i++){
+                comp = comps[i];
+                a = comp.a;
+                b = comp.b;
+                if (prune && !a.isDifferent(b) && !comp.entering) comps.splice(i--, 1);
+                else {
+                    el = comp.t;
+                    nested && !(comp.sd < 0) && i && (a.matrix = getGlobalMatrix(el, false, false, true));
+                    if (b.isVisible && a.isVisible) {
+                        if (comp.sd < 0) {
+                            state = new ElementState(el, props, fromState.simple);
+                            _fit(state, a, scale, 0, 0, state);
+                            state.matrix = getGlobalMatrix(el, false, false, true);
+                            state.css = comp.b.css;
+                            comp.a = a = state;
+                            fade && (el.style.opacity = interrupted ? b.opacity : a.opacity);
+                            stagger && swapOutTargets.push(el);
+                        } else if (comp.sd > 0 && fade) el.style.opacity = interrupted ? a.opacity - b.opacity : "0";
+                        _fit(a, b, scale, props);
+                    } else if (b.isVisible !== a.isVisible) {
+                        if (!b.isVisible) {
+                            a.isVisible && entering.push(a);
+                            comps.splice(i--, 1);
+                        } else if (!a.isVisible) {
+                            b.css = a.css;
+                            leaving.push(b);
+                            comps.splice(i--, 1);
+                            absolute && nested && _fit(a, b, scale, props);
+                        }
+                    }
+                    if (!scale) {
+                        el.style.maxWidth = Math.max(a.width, b.width) + "px";
+                        el.style.maxHeight = Math.max(a.height, b.height) + "px";
+                        el.style.minWidth = Math.min(a.width, b.width) + "px";
+                        el.style.minHeight = Math.min(a.height, b.height) + "px";
+                    }
+                    nested && toggleClass && el.classList.add(toggleClass);
+                }
+                finalStates.push(a);
+            }
+            var classTargets;
+            if (toggleClass) {
+                classTargets = finalStates.map(function(s) {
+                    return s.element;
+                });
+                nested && classTargets.forEach(function(e) {
+                    return e.classList.remove(toggleClass);
+                });
+            }
+            _lockBodyScroll(false);
+            if (scale) {
+                tweenVars.scaleX = function(i) {
+                    return comps[i].a.scaleX;
+                };
+                tweenVars.scaleY = function(i) {
+                    return comps[i].a.scaleY;
+                };
+            } else {
+                tweenVars.width = function(i) {
+                    return comps[i].a.width + "px";
+                };
+                tweenVars.height = function(i) {
+                    return comps[i].a.height + "px";
+                };
+                tweenVars.autoRound = vars.autoRound || false;
+            }
+            tweenVars.x = function(i) {
+                return comps[i].a.x + "px";
+            };
+            tweenVars.y = function(i) {
+                return comps[i].a.y + "px";
+            };
+            tweenVars.rotation = function(i) {
+                return comps[i].a.rotation + (spin ? spinFunc(i, targets[i], targets) * 360 : 0);
+            };
+            tweenVars.skewX = function(i) {
+                return comps[i].a.skewX;
+            };
+            targets = comps.map(function(c) {
+                return c.t;
+            });
+            if (_zIndex || _zIndex === 0) {
+                tweenVars.modifiers = {
+                    zIndex: function zIndex() {
+                        return _zIndex;
+                    }
+                };
+                tweenVars.zIndex = _zIndex;
+                tweenVars.immediateRender = vars.immediateRender !== false;
+            }
+            fade && (tweenVars.opacity = function(i) {
+                return comps[i].sd < 0 ? 0 : comps[i].sd > 0 ? comps[i].a.opacity : "+=0";
+            });
+            if (swapOutTargets.length) {
+                stagger = gsap.utils.distribute(stagger);
+                var dummyArray = targets.slice(swapOutTargets.length);
+                tweenVars.stagger = function(i, el) {
+                    return stagger(~swapOutTargets.indexOf(el) ? targets.indexOf(comps[i].swap.t) : i, el, dummyArray);
+                };
+            }
+            _callbacks.forEach(function(name) {
+                return vars[name] && animation.eventCallback(name, vars[name], vars[name + "Params"]);
+            });
+            if (custom && targets.length) {
+                remainingProps = _copy(tweenVars, _reserved);
+                if ("scale" in custom) {
+                    custom.scaleX = custom.scaleY = custom.scale;
+                    delete custom.scale;
+                }
+                for(p in custom){
+                    v = _copy(custom[p], _fitReserved);
+                    v[p] = tweenVars[p];
+                    !("duration" in v) && "duration" in tweenVars && (v.duration = tweenVars.duration);
+                    v.stagger = tweenVars.stagger;
+                    addFunc.call(animation, targets, v, 0);
+                    delete remainingProps[p];
+                }
+            }
+            if (targets.length || leaving.length || entering.length) {
+                toggleClass && animation.add(function() {
+                    return _toggleClass(classTargets, toggleClass, animation._zTime < 0 ? "remove" : "add");
+                }, 0) && !paused && _toggleClass(classTargets, toggleClass, "add");
+                targets.length && addFunc.call(animation, targets, remainingProps, 0);
+            }
+            _handleCallback(onEnter, entering, animation);
+            _handleCallback(onLeave, leaving, animation);
+            var batchTl = _batch && _batch.timeline;
+            if (batchTl) {
+                batchTl.add(animation, 0);
+                _batch._final.push(function() {
+                    return _setFinalStates(comps, !clearProps);
+                });
+            }
+            endTime = animation.duration();
+            animation.call(function() {
+                var forward = animation.time() >= endTime;
+                forward && !batchTl && _setFinalStates(comps, !clearProps);
+                toggleClass && _toggleClass(classTargets, toggleClass, forward ? "remove" : "add");
+            });
+        };
+        absoluteOnLeave && (absolute = comps.filter(function(comp) {
+            return !comp.sd && !comp.a.isVisible && comp.b.isVisible;
+        }).map(function(comp) {
+            return comp.a.element;
+        }));
+        if (_batch) {
+            var _batch$_abs;
+            absolute && (_batch$_abs = _batch._abs).push.apply(_batch$_abs, _filterComps(comps, absolute));
+            _batch._run.push(run);
+        } else {
+            absolute && _makeCompsAbsolute(_filterComps(comps, absolute));
+            run();
+        }
+        var anim = _batch ? _batch.timeline : animation;
+        anim.revert = function() {
+            return _killFlip(anim, 1, 1);
+        };
+        return anim;
+    }, _interrupt = function _interrupt(tl) {
+        tl.vars.onInterrupt && tl.vars.onInterrupt.apply(tl, tl.vars.onInterruptParams || []);
+        tl.getChildren(true, false, true).forEach(_interrupt);
+    }, _killFlip = function _killFlip(tl, action, force) {
+        if (tl && tl.progress() < 1 && (!tl.paused() || force)) {
+            if (action) {
+                _interrupt(tl);
+                action < 2 && tl.progress(1);
+                tl.kill();
+            }
+            return true;
+        }
+    }, _createLookup = function _createLookup(state) {
+        var lookup = state.idLookup = {}, alt = state.alt = {}, elStates = state.elementStates, i = elStates.length, elState;
+        while(i--){
+            elState = elStates[i];
+            lookup[elState.id] ? alt[elState.id] = elState : lookup[elState.id] = elState;
+        }
+    };
+    var FlipState = function() {
+        function FlipState(targets, vars, targetsAreElementStates) {
+            this.props = vars && vars.props;
+            this.simple = !!(vars && vars.simple);
+            if (targetsAreElementStates) {
+                this.targets = _elementsFromElementStates(targets);
+                this.elementStates = targets;
+                _createLookup(this);
+            } else {
+                this.targets = _toArray(targets);
+                var soft = vars && (vars.kill === false || vars.batch && !vars.kill);
+                _batch && !soft && _batch._kill.push(this);
+                this.update(soft || !!_batch);
+            }
+        }
+        var _proto = FlipState.prototype;
+        _proto.update = function update(soft) {
+            var _this = this;
+            this.elementStates = this.targets.map(function(el) {
+                return new ElementState(el, _this.props, _this.simple);
+            });
+            _createLookup(this);
+            this.interrupt(soft);
+            this.recordInlineStyles();
+            return this;
+        };
+        _proto.clear = function clear() {
+            this.targets.length = this.elementStates.length = 0;
+            _createLookup(this);
+            return this;
+        };
+        _proto.fit = function fit(state, scale, nested) {
+            var elStatesInOrder = _orderByDOMDepth(this.elementStates.slice(0), false, true), toElStates = (state || this).idLookup, i = 0, fromNode, toNode;
+            for(; i < elStatesInOrder.length; i++){
+                fromNode = elStatesInOrder[i];
+                nested && (fromNode.matrix = getGlobalMatrix(fromNode.element, false, false, true));
+                toNode = toElStates[fromNode.id];
+                toNode && _fit(fromNode, toNode, scale, true, 0, fromNode);
+                fromNode.matrix = getGlobalMatrix(fromNode.element, false, false, true);
+            }
+            return this;
+        };
+        _proto.getProperty = function getProperty(element, property) {
+            var es = this.getElementState(element) || _emptyObj;
+            return (property in es ? es : es.props || _emptyObj)[property];
+        };
+        _proto.add = function add(state) {
+            var i = state.targets.length, lookup = this.idLookup, alt = this.alt, index, es, es2;
+            while(i--){
+                es = state.elementStates[i];
+                es2 = lookup[es.id];
+                if (es2 && (es.element === es2.element || alt[es.id] && alt[es.id].element === es.element)) {
+                    index = this.elementStates.indexOf(es.element === es2.element ? es2 : alt[es.id]);
+                    this.targets.splice(index, 1, state.targets[i]);
+                    this.elementStates.splice(index, 1, es);
+                } else {
+                    this.targets.push(state.targets[i]);
+                    this.elementStates.push(es);
+                }
+            }
+            state.interrupted && (this.interrupted = true);
+            state.simple || (this.simple = false);
+            _createLookup(this);
+            return this;
+        };
+        _proto.compare = function compare(state) {
+            var l1 = state.idLookup, l2 = this.idLookup, unchanged = [], changed = [], enter = [], leave = [], targets = [], a1 = state.alt, a2 = this.alt, place = function place(s1, s2, el) {
+                return (s1.isVisible !== s2.isVisible ? s1.isVisible ? enter : leave : s1.isVisible ? changed : unchanged).push(el) && targets.push(el);
+            }, placeIfDoesNotExist = function placeIfDoesNotExist(s1, s2, el) {
+                return targets.indexOf(el) < 0 && place(s1, s2, el);
+            }, s1, s2, p, el, s1Alt, s2Alt, c1, c2;
+            for(p in l1){
+                s1Alt = a1[p];
+                s2Alt = a2[p];
+                s1 = !s1Alt ? l1[p] : _getChangingElState(state, this, p);
+                el = s1.element;
+                s2 = l2[p];
+                if (s2Alt) {
+                    c2 = s2.isVisible || !s2Alt.isVisible && el === s2.element ? s2 : s2Alt;
+                    c1 = s1Alt && !s1.isVisible && !s1Alt.isVisible && c2.element === s1Alt.element ? s1Alt : s1;
+                    if (c1.isVisible && c2.isVisible && c1.element !== c2.element) {
+                        (c1.isDifferent(c2) ? changed : unchanged).push(c1.element, c2.element);
+                        targets.push(c1.element, c2.element);
+                    } else place(c1, c2, c1.element);
+                    s1Alt && c1.element === s1Alt.element && (s1Alt = l1[p]);
+                    placeIfDoesNotExist(c1.element !== s2.element && s1Alt ? s1Alt : c1, s2, s2.element);
+                    placeIfDoesNotExist(s1Alt && s1Alt.element === s2Alt.element ? s1Alt : c1, s2Alt, s2Alt.element);
+                    s1Alt && placeIfDoesNotExist(s1Alt, s2Alt.element === s1Alt.element ? s2Alt : s2, s1Alt.element);
+                } else {
+                    !s2 ? enter.push(el) : !s2.isDifferent(s1) ? unchanged.push(el) : place(s1, s2, el);
+                    s1Alt && placeIfDoesNotExist(s1Alt, s2, s1Alt.element);
+                }
+            }
+            for(p in l2)if (!l1[p]) {
+                leave.push(l2[p].element);
+                a2[p] && leave.push(a2[p].element);
+            }
+            return {
+                changed: changed,
+                unchanged: unchanged,
+                enter: enter,
+                leave: leave
+            };
+        };
+        _proto.recordInlineStyles = function recordInlineStyles() {
+            var props = _memoizedRemoveProps[this.props] || _removeProps, i = this.elementStates.length;
+            while(i--)_recordInlineStyles(this.elementStates[i], props);
+        };
+        _proto.interrupt = function interrupt(soft) {
+            var _this2 = this;
+            var timelines = [];
+            this.targets.forEach(function(t) {
+                var tl = t._flip, foundInProgress = _killFlip(tl, soft ? 0 : 1);
+                soft && foundInProgress && timelines.indexOf(tl) < 0 && tl.add(function() {
+                    return _this2.updateVisibility();
+                });
+                foundInProgress && timelines.push(tl);
+            });
+            !soft && timelines.length && this.updateVisibility();
+            this.interrupted || (this.interrupted = !!timelines.length);
+        };
+        _proto.updateVisibility = function updateVisibility() {
+            this.elementStates.forEach(function(es) {
+                var b = es.element.getBoundingClientRect();
+                es.isVisible = !!(b.width || b.height || b.top || b.left);
+                es.uncache = 1;
+            });
+        };
+        _proto.getElementState = function getElementState(element) {
+            return this.elementStates[this.targets.indexOf(_getEl(element))];
+        };
+        _proto.makeAbsolute = function makeAbsolute() {
+            return _orderByDOMDepth(this.elementStates.slice(0), true, true).map(_makeAbsolute);
+        };
+        return FlipState;
+    }();
+    var ElementState = function() {
+        function ElementState(element, props, simple) {
+            this.element = element;
+            this.update(props, simple);
+        }
+        var _proto2 = ElementState.prototype;
+        _proto2.isDifferent = function isDifferent(state) {
+            var b1 = this.bounds, b2 = state.bounds;
+            return b1.top !== b2.top || b1.left !== b2.left || b1.width !== b2.width || b1.height !== b2.height || !this.matrix.equals(state.matrix) || this.opacity !== state.opacity || this.props && state.props && JSON.stringify(this.props) !== JSON.stringify(state.props);
+        };
+        _proto2.update = function update(props, simple) {
+            var self = this, element = self.element, getProp = gsap.getProperty(element), cache = gsap.core.getCache(element), bounds = element.getBoundingClientRect(), bbox = element.getBBox && typeof element.getBBox === "function" && element.nodeName.toLowerCase() !== "svg" && element.getBBox(), m = simple ? new Matrix2D(1, 0, 0, 1, bounds.left + _getDocScrollLeft(), bounds.top + _getDocScrollTop()) : getGlobalMatrix(element, false, false, true);
+            self.getProp = getProp;
+            self.element = element;
+            self.id = _getID(element);
+            self.matrix = m;
+            self.cache = cache;
+            self.bounds = bounds;
+            self.isVisible = !!(bounds.width || bounds.height || bounds.left || bounds.top);
+            self.display = getProp("display");
+            self.position = getProp("position");
+            self.parent = element.parentNode;
+            self.x = getProp("x");
+            self.y = getProp("y");
+            self.scaleX = cache.scaleX;
+            self.scaleY = cache.scaleY;
+            self.rotation = getProp("rotation");
+            self.skewX = getProp("skewX");
+            self.opacity = getProp("opacity");
+            self.width = bbox ? bbox.width : _closestTenth(getProp("width", "px"), 0.04);
+            self.height = bbox ? bbox.height : _closestTenth(getProp("height", "px"), 0.04);
+            props && _recordProps(self, _memoizedProps[props] || _memoizeProps(props));
+            self.ctm = element.getCTM && element.nodeName.toLowerCase() === "svg" && _getCTM(element).inverse();
+            self.simple = simple || _round(m.a) === 1 && !_round(m.b) && !_round(m.c) && _round(m.d) === 1;
+            self.uncache = 0;
+        };
+        return ElementState;
+    }();
+    var FlipAction = function() {
+        function FlipAction(vars, batch) {
+            this.vars = vars;
+            this.batch = batch;
+            this.states = [];
+            this.timeline = batch.timeline;
+        }
+        var _proto3 = FlipAction.prototype;
+        _proto3.getStateById = function getStateById(id) {
+            var i = this.states.length;
+            while(i--){
+                if (this.states[i].idLookup[id]) return this.states[i];
+            }
+        };
+        _proto3.kill = function kill() {
+            this.batch.remove(this);
+        };
+        return FlipAction;
+    }();
+    var FlipBatch = function() {
+        function FlipBatch(id) {
+            this.id = id;
+            this.actions = [];
+            this._kill = [];
+            this._final = [];
+            this._abs = [];
+            this._run = [];
+            this.data = {};
+            this.state = new FlipState();
+            this.timeline = gsap.timeline();
+        }
+        var _proto4 = FlipBatch.prototype;
+        _proto4.add = function add(config) {
+            var result = this.actions.filter(function(action) {
+                return action.vars === config;
+            });
+            if (result.length) return result[0];
+            result = new FlipAction(typeof config === "function" ? {
+                animate: config
+            } : config, this);
+            this.actions.push(result);
+            return result;
+        };
+        _proto4.remove = function remove(action) {
+            var i = this.actions.indexOf(action);
+            i >= 0 && this.actions.splice(i, 1);
+            return this;
+        };
+        _proto4.getState = function getState(merge) {
+            var _this3 = this;
+            var prevBatch = _batch, prevAction = _batchAction;
+            _batch = this;
+            this.state.clear();
+            this._kill.length = 0;
+            this.actions.forEach(function(action) {
+                if (action.vars.getState) {
+                    action.states.length = 0;
+                    _batchAction = action;
+                    action.state = action.vars.getState(action);
+                }
+                merge && action.states.forEach(function(s) {
+                    return _this3.state.add(s);
+                });
+            });
+            _batchAction = prevAction;
+            _batch = prevBatch;
+            this.killConflicts();
+            return this;
+        };
+        _proto4.animate = function animate() {
+            var _this4 = this;
+            var prevBatch = _batch, tl = this.timeline, i = this.actions.length, finalStates, endTime;
+            _batch = this;
+            tl.clear();
+            this._abs.length = this._final.length = this._run.length = 0;
+            this.actions.forEach(function(a) {
+                a.vars.animate && a.vars.animate(a);
+                var onEnter = a.vars.onEnter, onLeave = a.vars.onLeave, targets = a.targets, s, result;
+                if (targets && targets.length && (onEnter || onLeave)) {
+                    s = new FlipState();
+                    a.states.forEach(function(state) {
+                        return s.add(state);
+                    });
+                    result = s.compare(Flip.getState(targets));
+                    result.enter.length && onEnter && onEnter(result.enter);
+                    result.leave.length && onLeave && onLeave(result.leave);
+                }
+            });
+            _makeCompsAbsolute(this._abs);
+            this._run.forEach(function(f) {
+                return f();
+            });
+            endTime = tl.duration();
+            finalStates = this._final.slice(0);
+            tl.add(function() {
+                if (endTime <= tl.time()) {
+                    finalStates.forEach(function(f) {
+                        return f();
+                    });
+                    _forEachBatch(_this4, "onComplete");
+                }
+            });
+            _batch = prevBatch;
+            while(i--)this.actions[i].vars.once && this.actions[i].kill();
+            _forEachBatch(this, "onStart");
+            tl.restart();
+            return this;
+        };
+        _proto4.loadState = function loadState(done) {
+            done || (done = function done() {
+                return 0;
+            });
+            var queue = [];
+            this.actions.forEach(function(c) {
+                if (c.vars.loadState) {
+                    var i, f = function f(targets) {
+                        targets && (c.targets = targets);
+                        i = queue.indexOf(f);
+                        if (~i) {
+                            queue.splice(i, 1);
+                            queue.length || done();
+                        }
+                    };
+                    queue.push(f);
+                    c.vars.loadState(f);
+                }
+            });
+            queue.length || done();
+            return this;
+        };
+        _proto4.setState = function setState() {
+            this.actions.forEach(function(c) {
+                return c.targets = c.vars.setState && c.vars.setState(c);
+            });
+            return this;
+        };
+        _proto4.killConflicts = function killConflicts(soft) {
+            this.state.interrupt(soft);
+            this._kill.forEach(function(state) {
+                return state.interrupt(soft);
+            });
+            return this;
+        };
+        _proto4.run = function run(skipGetState, merge) {
+            var _this5 = this;
+            if (this !== _batch) {
+                skipGetState || this.getState(merge);
+                this.loadState(function() {
+                    if (!_this5._killed) {
+                        _this5.setState();
+                        _this5.animate();
+                    }
+                });
+            }
+            return this;
+        };
+        _proto4.clear = function clear(stateOnly) {
+            this.state.clear();
+            stateOnly || (this.actions.length = 0);
+        };
+        _proto4.getStateById = function getStateById(id) {
+            var i = this.actions.length, s;
+            while(i--){
+                s = this.actions[i].getStateById(id);
+                if (s) return s;
+            }
+            return this.state.idLookup[id] && this.state;
+        };
+        _proto4.kill = function kill() {
+            this._killed = 1;
+            this.clear();
+            delete _batchLookup[this.id];
+        };
+        return FlipBatch;
+    }();
+    var Flip = function() {
+        function Flip() {}
+        Flip.getState = function getState(targets, vars) {
+            var state = _parseState(targets, vars);
+            _batchAction && _batchAction.states.push(state);
+            vars && vars.batch && Flip.batch(vars.batch).state.add(state);
+            return state;
+        };
+        Flip.from = function from(state, vars) {
+            vars = vars || {};
+            "clearProps" in vars || (vars.clearProps = true);
+            return _fromTo(state, _parseState(vars.targets || state.targets, {
+                props: vars.props || state.props,
+                simple: vars.simple,
+                kill: !!vars.kill
+            }), vars, -1);
+        };
+        Flip.to = function to(state, vars) {
+            return _fromTo(state, _parseState(vars.targets || state.targets, {
+                props: vars.props || state.props,
+                simple: vars.simple,
+                kill: !!vars.kill
+            }), vars, 1);
+        };
+        Flip.fromTo = function fromTo(fromState, toState, vars) {
+            return _fromTo(fromState, toState, vars);
+        };
+        Flip.fit = function fit(fromEl, toEl, vars) {
+            var v = vars ? _copy(vars, _fitReserved) : {}, _ref = vars || v, absolute = _ref.absolute, scale = _ref.scale, getVars = _ref.getVars, props = _ref.props, runBackwards = _ref.runBackwards, onComplete = _ref.onComplete, simple = _ref.simple, fitChild = vars && vars.fitChild && _getEl(vars.fitChild), before = _parseElementState(toEl, props, simple, fromEl), after = _parseElementState(fromEl, 0, simple, before), inlineProps = props ? _memoizedRemoveProps[props] : _removeProps, ctx = gsap.context();
+            props && _applyProps(v, before.props);
+            _recordInlineStyles(after, inlineProps);
+            if (runBackwards) {
+                "immediateRender" in v || (v.immediateRender = true);
+                v.onComplete = function() {
+                    _applyInlineStyles(after);
+                    onComplete && onComplete.apply(this, arguments);
+                };
+            }
+            absolute && _makeAbsolute(after, before);
+            v = _fit(after, before, scale || fitChild, props, fitChild, v.duration || getVars ? v : 0);
+            ctx && !getVars && ctx.add(function() {
+                return function() {
+                    return _applyInlineStyles(after);
+                };
+            });
+            return getVars ? v : v.duration ? gsap.to(after.element, v) : null;
+        };
+        Flip.makeAbsolute = function makeAbsolute(targetsOrStates, vars) {
+            return (targetsOrStates instanceof FlipState ? targetsOrStates : new FlipState(targetsOrStates, vars)).makeAbsolute();
+        };
+        Flip.batch = function batch(id) {
+            id || (id = "default");
+            return _batchLookup[id] || (_batchLookup[id] = new FlipBatch(id));
+        };
+        Flip.killFlipsOf = function killFlipsOf(targets, complete) {
+            (targets instanceof FlipState ? targets.targets : _toArray(targets)).forEach(function(t) {
+                return t && _killFlip(t._flip, complete !== false ? 1 : 2);
+            });
+        };
+        Flip.isFlipping = function isFlipping(target) {
+            var f = Flip.getByTarget(target);
+            return !!f && f.isActive();
+        };
+        Flip.getByTarget = function getByTarget(target) {
+            return (_getEl(target) || _emptyObj)._flip;
+        };
+        Flip.getElementState = function getElementState(target, props) {
+            return new ElementState(_getEl(target), props);
+        };
+        Flip.convertCoordinates = function convertCoordinates(fromElement, toElement, point) {
+            var m = getGlobalMatrix(toElement, true, true).multiply(getGlobalMatrix(fromElement));
+            return point ? m.apply(point) : m;
+        };
+        Flip.register = function register(core) {
+            _body$1 = typeof document !== "undefined" && document.body;
+            if (_body$1) {
+                gsap = core;
+                _setDoc(_body$1);
+                _toArray = gsap.utils.toArray;
+                _getStyleSaver = gsap.core.getStyleSaver;
+                var snap = gsap.utils.snap(0.1);
+                _closestTenth = function _closestTenth(value, add) {
+                    return snap(parseFloat(value) + add);
+                };
+            }
+        };
+        return Flip;
+    }();
+    Flip.version = "3.12.5";
+    typeof window !== "undefined" && window.gsap && window.gsap.registerPlugin(Flip);
+    exports1.Flip = Flip;
+    exports1.default = Flip;
+    Object.defineProperty(exports1, '__esModule', {
+        value: true
+    });
+});
+
+},{}],"cnkqH":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// Exporting utility functions for use in other modules.
+parcelHelpers.export(exports, "preloadImages", ()=>preloadImages);
+var _imagesloaded = require("imagesloaded");
+var _imagesloadedDefault = parcelHelpers.interopDefault(_imagesloaded);
+/**
+ * Preloads images specified by the CSS selector.
+ * @function
+ * @param {string} [selector='img'] - CSS selector for target images.
+ * @returns {Promise} - Resolves when all specified images are loaded.
+ */ const preloadImages = (selector = "img")=>{
+    return new Promise((resolve)=>{
+        // The imagesLoaded library is used to ensure all images (including backgrounds) are fully loaded.
+        (0, _imagesloadedDefault.default)(document.querySelectorAll(selector), {
+            background: true
+        }, resolve);
+    });
+};
+
+},{"imagesloaded":"aYzyZ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"aYzyZ":[function(require,module,exports,__globalThis) {
+/*!
+ * imagesLoaded v5.0.0
+ * JavaScript is all like "You images are done yet or what?"
+ * MIT License
+ */ (function(window1, factory) {
+    // universal module definition
+    if (0, module.exports) // CommonJS
+    module.exports = factory(window1, require("493897767f7120e"));
+    else // browser global
+    window1.imagesLoaded = factory(window1, window1.EvEmitter);
+})(typeof window !== 'undefined' ? window : this, function factory(window1, EvEmitter) {
+    let $ = window1.jQuery;
+    let console = window1.console;
+    // -------------------------- helpers -------------------------- //
+    // turn element or nodeList into an array
+    function makeArray(obj) {
+        // use object if already an array
+        if (Array.isArray(obj)) return obj;
+        let isArrayLike = typeof obj == 'object' && typeof obj.length == 'number';
+        // convert nodeList to array
+        if (isArrayLike) return [
+            ...obj
+        ];
+        // array of single index
+        return [
+            obj
+        ];
+    }
+    // -------------------------- imagesLoaded -------------------------- //
+    /**
+ * @param {[Array, Element, NodeList, String]} elem
+ * @param {[Object, Function]} options - if function, use as callback
+ * @param {Function} onAlways - callback function
+ * @returns {ImagesLoaded}
+ */ function ImagesLoaded(elem, options, onAlways) {
+        // coerce ImagesLoaded() without new, to be new ImagesLoaded()
+        if (!(this instanceof ImagesLoaded)) return new ImagesLoaded(elem, options, onAlways);
+        // use elem as selector string
+        let queryElem = elem;
+        if (typeof elem == 'string') queryElem = document.querySelectorAll(elem);
+        // bail if bad element
+        if (!queryElem) {
+            console.error(`Bad element for imagesLoaded ${queryElem || elem}`);
+            return;
+        }
+        this.elements = makeArray(queryElem);
+        this.options = {};
+        // shift arguments if no options set
+        if (typeof options == 'function') onAlways = options;
+        else Object.assign(this.options, options);
+        if (onAlways) this.on('always', onAlways);
+        this.getImages();
+        // add jQuery Deferred object
+        if ($) this.jqDeferred = new $.Deferred();
+        // HACK check async to allow time to bind listeners
+        setTimeout(this.check.bind(this));
+    }
+    ImagesLoaded.prototype = Object.create(EvEmitter.prototype);
+    ImagesLoaded.prototype.getImages = function() {
+        this.images = [];
+        // filter & find items if we have an item selector
+        this.elements.forEach(this.addElementImages, this);
+    };
+    const elementNodeTypes = [
+        1,
+        9,
+        11
+    ];
+    /**
+ * @param {Node} elem
+ */ ImagesLoaded.prototype.addElementImages = function(elem) {
+        // filter siblings
+        if (elem.nodeName === 'IMG') this.addImage(elem);
+        // get background image on element
+        if (this.options.background === true) this.addElementBackgroundImages(elem);
+        // find children
+        // no non-element nodes, #143
+        let { nodeType } = elem;
+        if (!nodeType || !elementNodeTypes.includes(nodeType)) return;
+        let childImgs = elem.querySelectorAll('img');
+        // concat childElems to filterFound array
+        for (let img of childImgs)this.addImage(img);
+        // get child background images
+        if (typeof this.options.background == 'string') {
+            let children = elem.querySelectorAll(this.options.background);
+            for (let child of children)this.addElementBackgroundImages(child);
+        }
+    };
+    const reURL = /url\((['"])?(.*?)\1\)/gi;
+    ImagesLoaded.prototype.addElementBackgroundImages = function(elem) {
+        let style = getComputedStyle(elem);
+        // Firefox returns null if in a hidden iframe https://bugzil.la/548397
+        if (!style) return;
+        // get url inside url("...")
+        let matches = reURL.exec(style.backgroundImage);
+        while(matches !== null){
+            let url = matches && matches[2];
+            if (url) this.addBackground(url, elem);
+            matches = reURL.exec(style.backgroundImage);
+        }
+    };
+    /**
+ * @param {Image} img
+ */ ImagesLoaded.prototype.addImage = function(img) {
+        let loadingImage = new LoadingImage(img);
+        this.images.push(loadingImage);
+    };
+    ImagesLoaded.prototype.addBackground = function(url, elem) {
+        let background = new Background(url, elem);
+        this.images.push(background);
+    };
+    ImagesLoaded.prototype.check = function() {
+        this.progressedCount = 0;
+        this.hasAnyBroken = false;
+        // complete if no images
+        if (!this.images.length) {
+            this.complete();
+            return;
+        }
+        /* eslint-disable-next-line func-style */ let onProgress = (image, elem, message)=>{
+            // HACK - Chrome triggers event before object properties have changed. #83
+            setTimeout(()=>{
+                this.progress(image, elem, message);
+            });
+        };
+        this.images.forEach(function(loadingImage) {
+            loadingImage.once('progress', onProgress);
+            loadingImage.check();
+        });
+    };
+    ImagesLoaded.prototype.progress = function(image, elem, message) {
+        this.progressedCount++;
+        this.hasAnyBroken = this.hasAnyBroken || !image.isLoaded;
+        // progress event
+        this.emitEvent('progress', [
+            this,
+            image,
+            elem
+        ]);
+        if (this.jqDeferred && this.jqDeferred.notify) this.jqDeferred.notify(this, image);
+        // check if completed
+        if (this.progressedCount === this.images.length) this.complete();
+        if (this.options.debug && console) console.log(`progress: ${message}`, image, elem);
+    };
+    ImagesLoaded.prototype.complete = function() {
+        let eventName = this.hasAnyBroken ? 'fail' : 'done';
+        this.isComplete = true;
+        this.emitEvent(eventName, [
+            this
+        ]);
+        this.emitEvent('always', [
+            this
+        ]);
+        if (this.jqDeferred) {
+            let jqMethod = this.hasAnyBroken ? 'reject' : 'resolve';
+            this.jqDeferred[jqMethod](this);
+        }
+    };
+    // --------------------------  -------------------------- //
+    function LoadingImage(img) {
+        this.img = img;
+    }
+    LoadingImage.prototype = Object.create(EvEmitter.prototype);
+    LoadingImage.prototype.check = function() {
+        // If complete is true and browser supports natural sizes,
+        // try to check for image status manually.
+        let isComplete = this.getIsImageComplete();
+        if (isComplete) {
+            // report based on naturalWidth
+            this.confirm(this.img.naturalWidth !== 0, 'naturalWidth');
+            return;
+        }
+        // If none of the checks above matched, simulate loading on detached element.
+        this.proxyImage = new Image();
+        // add crossOrigin attribute. #204
+        if (this.img.crossOrigin) this.proxyImage.crossOrigin = this.img.crossOrigin;
+        this.proxyImage.addEventListener('load', this);
+        this.proxyImage.addEventListener('error', this);
+        // bind to image as well for Firefox. #191
+        this.img.addEventListener('load', this);
+        this.img.addEventListener('error', this);
+        this.proxyImage.src = this.img.currentSrc || this.img.src;
+    };
+    LoadingImage.prototype.getIsImageComplete = function() {
+        // check for non-zero, non-undefined naturalWidth
+        // fixes Safari+InfiniteScroll+Masonry bug infinite-scroll#671
+        return this.img.complete && this.img.naturalWidth;
+    };
+    LoadingImage.prototype.confirm = function(isLoaded, message) {
+        this.isLoaded = isLoaded;
+        let { parentNode } = this.img;
+        // emit progress with parent <picture> or self <img>
+        let elem = parentNode.nodeName === 'PICTURE' ? parentNode : this.img;
+        this.emitEvent('progress', [
+            this,
+            elem,
+            message
+        ]);
+    };
+    // ----- events ----- //
+    // trigger specified handler for event type
+    LoadingImage.prototype.handleEvent = function(event) {
+        let method = 'on' + event.type;
+        if (this[method]) this[method](event);
+    };
+    LoadingImage.prototype.onload = function() {
+        this.confirm(true, 'onload');
+        this.unbindEvents();
+    };
+    LoadingImage.prototype.onerror = function() {
+        this.confirm(false, 'onerror');
+        this.unbindEvents();
+    };
+    LoadingImage.prototype.unbindEvents = function() {
+        this.proxyImage.removeEventListener('load', this);
+        this.proxyImage.removeEventListener('error', this);
+        this.img.removeEventListener('load', this);
+        this.img.removeEventListener('error', this);
+    };
+    // -------------------------- Background -------------------------- //
+    function Background(url, element) {
+        this.url = url;
+        this.element = element;
+        this.img = new Image();
+    }
+    // inherit LoadingImage prototype
+    Background.prototype = Object.create(LoadingImage.prototype);
+    Background.prototype.check = function() {
+        this.img.addEventListener('load', this);
+        this.img.addEventListener('error', this);
+        this.img.src = this.url;
+        // check if image is already complete
+        let isComplete = this.getIsImageComplete();
+        if (isComplete) {
+            this.confirm(this.img.naturalWidth !== 0, 'naturalWidth');
+            this.unbindEvents();
+        }
+    };
+    Background.prototype.unbindEvents = function() {
+        this.img.removeEventListener('load', this);
+        this.img.removeEventListener('error', this);
+    };
+    Background.prototype.confirm = function(isLoaded, message) {
+        this.isLoaded = isLoaded;
+        this.emitEvent('progress', [
+            this,
+            this.element,
+            message
+        ]);
+    };
+    // -------------------------- jQuery -------------------------- //
+    ImagesLoaded.makeJQueryPlugin = function(jQuery) {
+        jQuery = jQuery || window1.jQuery;
+        if (!jQuery) return;
+        // set local variable
+        $ = jQuery;
+        // $().imagesLoaded()
+        $.fn.imagesLoaded = function(options, onAlways) {
+            let instance = new ImagesLoaded(this, options, onAlways);
+            return instance.jqDeferred.promise($(this));
+        };
+    };
+    // try making plugin
+    ImagesLoaded.makeJQueryPlugin();
+    // --------------------------  -------------------------- //
+    return ImagesLoaded;
+});
+
+},{"493897767f7120e":"7rCHo"}],"7rCHo":[function(require,module,exports,__globalThis) {
+/**
+ * EvEmitter v2.1.1
+ * Lil' event emitter
+ * MIT License
+ */ (function(global, factory) {
+    // universal module definition
+    if (0, module.exports) // CommonJS - Browserify, Webpack
+    module.exports = factory();
+    else // Browser globals
+    global.EvEmitter = factory();
+})(typeof window != 'undefined' ? window : this, function() {
+    function EvEmitter() {}
+    let proto = EvEmitter.prototype;
+    proto.on = function(eventName, listener) {
+        if (!eventName || !listener) return this;
+        // set events hash
+        let events = this._events = this._events || {};
+        // set listeners array
+        let listeners = events[eventName] = events[eventName] || [];
+        // only add once
+        if (!listeners.includes(listener)) listeners.push(listener);
+        return this;
+    };
+    proto.once = function(eventName, listener) {
+        if (!eventName || !listener) return this;
+        // add event
+        this.on(eventName, listener);
+        // set once flag
+        // set onceEvents hash
+        let onceEvents = this._onceEvents = this._onceEvents || {};
+        // set onceListeners object
+        let onceListeners = onceEvents[eventName] = onceEvents[eventName] || {};
+        // set flag
+        onceListeners[listener] = true;
+        return this;
+    };
+    proto.off = function(eventName, listener) {
+        let listeners = this._events && this._events[eventName];
+        if (!listeners || !listeners.length) return this;
+        let index = listeners.indexOf(listener);
+        if (index != -1) listeners.splice(index, 1);
+        return this;
+    };
+    proto.emitEvent = function(eventName, args) {
+        let listeners = this._events && this._events[eventName];
+        if (!listeners || !listeners.length) return this;
+        // copy over to avoid interference if .off() in listener
+        listeners = listeners.slice(0);
+        args = args || [];
+        // once stuff
+        let onceListeners = this._onceEvents && this._onceEvents[eventName];
+        for (let listener of listeners){
+            let isOnce = onceListeners && onceListeners[listener];
+            if (isOnce) {
+                // remove listener
+                // remove before trigger to prevent recursion
+                this.off(eventName, listener);
+                // unset once flag
+                delete onceListeners[listener];
+            }
+            // trigger listener
+            listener.apply(this, args);
+        }
+        return this;
+    };
+    proto.allOff = function() {
+        delete this._events;
+        delete this._onceEvents;
+        return this;
+    };
+    return EvEmitter;
 });
 
 },{}]},["dP7vO","ebWYT"], "ebWYT", "parcelRequire94c2")

@@ -1,0 +1,68 @@
+.projects__section {
+  position: relative;
+  width: 100vw;
+  min-height: 80vh;
+  //   @include flex(center, space-between, row);
+  gap: 2rem;
+  padding: 0 5rem;
+  margin: 20rem 0 0;
+
+  .projects__title {
+    @extend %title-120;
+    @extend %link;
+    display: inline-block;
+    padding: 1rem;
+    text-transform: uppercase;
+    // line-height: 0.7;
+    font-weight: 300;
+  }
+
+  .projects.content__img {
+    display: inline-block;
+    width: 40rem;
+    aspect-ratio: 1/0.3;
+    border-radius: 50px;
+  }
+
+  .projects__wrapper {
+    width: 100%;
+    @include flex(flex-start, flex-start, row wrap);
+    gap: 3rem;
+    margin: 8rem 0 0;
+
+    .project__card {
+      width: min(100%, 450px);
+      border: 1px solid $color-alto;
+      @include flex(flex-start, flex-start, column);
+      gap: 2rem;
+      padding: 1rem;
+      min-height: 250px;
+      flex-grow: 1;
+
+      .title {
+        @extend %title-30;
+        text-transform: uppercase;
+      }
+
+      .tools {
+        @include flex(flex-start, flex-start, row wrap);
+        gap: 2rem;
+
+        span {
+          border: 1px solid $color-alto;
+          border-radius: 50px;
+          padding: 1rem;
+          width: max-content;
+          @extend %description-16;
+          text-transform: uppercase;
+        }
+      }
+
+      .project__link {
+        @extend %description-16;
+        @extend %link;
+        margin-top: auto;
+      }
+    }
+  }
+}

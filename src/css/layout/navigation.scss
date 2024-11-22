@@ -4,12 +4,14 @@
   pointer-events: none;
   @include flex;
   justify-content: space-between;
-  padding: 0.5rem 1.6rem;
+  padding: 0.5rem 2rem;
   z-index: z("navigation");
   width: 100%;
 
-  span {
+  span,
+  a {
     text-transform: uppercase;
+    font-size: 2rem;
   }
 }
 
