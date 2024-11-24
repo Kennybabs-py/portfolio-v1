@@ -783,7 +783,6 @@ const init = ()=>{
             effect: (0, _blurScrollEffect.BlurScrollEffect)
         }
     ];
-    // Iterate over each effect configuration and apply the effect to all matching elements
     blureffects.forEach(({ selector, effect })=>{
         document.querySelectorAll(selector).forEach((el)=>{
             new effect(el, "chars");
@@ -795,7 +794,6 @@ const init = ()=>{
             effect: (0, _textRevealEffect.TextRevealEffect)
         }
     ];
-    // Iterate over each effect configuration and apply the effect to all matching elements
     titleffects.forEach(({ selector, effect })=>{
         document.querySelectorAll(selector).forEach((el)=>{
             new effect(el, "words");
@@ -813,8 +811,8 @@ const init = ()=>{
             }
         });
     });
-    window.addEventListener("resize", createFlipOnScrollAnimation);
 };
+window.addEventListener("resize", init);
 (0, _preloadImages.preloadImages)(".hero__img").then(()=>{
     document.body.classList.remove("loading");
     init();
@@ -7808,7 +7806,7 @@ class BlurScrollEffect {
             scrollTrigger: {
                 trigger: this.textElement,
                 start: "top bottom",
-                end: "bottom center+=15%",
+                end: "bottom bottom-=15%",
                 scrub: true
             }
         });

@@ -56,7 +56,7 @@ export class BlurScrollEffect {
         scrollTrigger: {
           trigger: this.textElement, // Element that triggers the animation.
           start: "top bottom", // Animation starts when element hits bottom of viewport.
-          end: "bottom center+=15%", // Animation ends in the center of the viewport.
+          end: "bottom bottom-=15%", // Animation ends in the center of the viewport.
           scrub: true, // Animation progress tied to scroll position.
         },
       }
