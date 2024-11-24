@@ -252,8 +252,8 @@ const init = () => {
       scrollTo: { y: "#contact" },
     });
   });
+  window.addEventListener("resize", createFlipOnScrollAnimation);
 };
-window.addEventListener("resize", init);
 
 preloadImages(".hero__img").then(() => {
   document.body.classList.remove("loading");
