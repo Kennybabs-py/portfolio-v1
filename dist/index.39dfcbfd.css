@@ -351,6 +351,7 @@ img {
 
 .hero__section .location, .hero__section span {
   text-transform: uppercase;
+  font-family: Space Grotesk;
   font-size: 2.5rem;
   font-weight: 300;
   line-height: 1;
