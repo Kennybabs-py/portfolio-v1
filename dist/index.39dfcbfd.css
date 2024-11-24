@@ -304,6 +304,7 @@ img {
   height: 100vh;
   padding: 0 5rem;
   display: flex;
+  overflow-x: hidden;
 }
 
 .hero__section .hero__title {
@@ -312,6 +313,7 @@ img {
   align-items: flex-start;
   gap: 1rem;
   display: flex;
+  overflow-x: hidden;
 }
 
 .hero__section .hero__title h1 {
@@ -535,6 +537,7 @@ img {
   padding: 1rem;
   font-weight: 300;
   display: inline-block;
+  overflow-x: hidden;
 }
 
 .contact__section .contact__wrapper {
